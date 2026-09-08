@@ -43,6 +43,15 @@ jobs:
         with:
           fetch-depth: 0  # need real tag history for the changelog step below, not a shallow clone
 
+      - name: Verify release version
+        shell: pwsh
+        run: |
+          $version = (Get-Content VERSION -Raw).Trim()
+          $tagVersion = "${{ github.ref_name }}".TrimStart("v")
+          if ($version -ne $tagVersion) {
+            throw "VERSION ($version) does not match release tag ($tagVersion)."
+          }
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
