@@ -174,8 +174,13 @@ _BUILTIN_DEFAULT_WALK_PATHS = {
     "Fairy King Forest": "Fairy King Forest",
     "King's Tomb": "Kings Tomb",
     "Spirit City Act3": "Spirit Act3",
+    "Crimson Shore": "Crimson Shore",
+    "Snowy Castle Act2": "Snowy Castle Act2",
+    "Snowy Castle Act3": "Snowy Castle Act3",
     "Event Act1": "Villian1",
     "Event Act2": "Villian2",
+    "Summer": "Summer Tidal Siege",
+    "Summer Portal": "Summer Portal",
 }
 
 
