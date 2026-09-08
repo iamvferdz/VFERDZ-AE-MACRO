@@ -53,8 +53,8 @@ You can also double-click `run.bat` after installing the dependencies.
 In Terminal:
 
 ```bash
-git clone https://github.com/Cweamy/Anime-Expeditions-Creams-Macro.git
-cd Anime-Expeditions-Creams-Macro
+git clone https://github.com/junssei/ae-macro.git
+cd ae-macro
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip
