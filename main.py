@@ -88,7 +88,7 @@ IMAGE_MANAGER_CATEGORIES = {
     "detect": ("detect", "Detection Images"),
 }
 
-GUI_TITLE = "Junsei | Anime Expeditions"
+GUI_TITLE = "Junssei macro | Anime Expeditions"
 PANEL_WIDTH = 400
 TITLEBAR_H = 44  # custom HTML titlebar, since the window is frameless (no native OS titlebar)
 LOGS_H = 160  # log strip under the docked Roblox window, same width as the game
