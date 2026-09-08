@@ -3151,6 +3151,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         lobby_sightings = 0     # consecutive checks that found the lobby's Play button
         polls = 0
         while True:
+            if polls and time.time() >= deadline:
+                return "timeout"
             if stop_event.is_set():
                 return "stopped"
             try:

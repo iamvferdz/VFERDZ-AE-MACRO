@@ -171,7 +171,7 @@ def check_for_update(timeout: float = 6.0, log=None) -> dict:
     suffix = "-macos.zip" if sys.platform == "darwin" else "-windows.zip"
     release_zip_asset = (
         next((a for a in assets if a.get("name", "").lower().endswith(suffix)), None)
-        or next((a for a in assets if a.get("name", "").lower() == "ae-macro.zip"), None))
+        or next((a for a in assets if a.get("name", "").lower() == "creams-macro-anime-expeditions.zip"), None))
     return {
         "available": True,
         "version": tag,
