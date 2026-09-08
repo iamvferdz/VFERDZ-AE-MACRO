@@ -1,6 +1,6 @@
 # Contributing Guidelines
 
-Guidelines for contributing code, documentation, and assets to Creams Macro.
+Guidelines for contributing code, documentation, and assets to Junsei.
 
 ---
 

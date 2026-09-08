@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Anime Expeditions (Cream's Macro) are documented here.
+All notable changes to Anime Expeditions (Junsei) are documented here.
 
 ## [0.19.1] - 2026-08-13
 

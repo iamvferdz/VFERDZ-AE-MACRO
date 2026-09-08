@@ -1,4 +1,4 @@
-# Cream's Macro: Complete User Guide
+# Junsei: Complete User Guide
 
 This guide covers installation, first-time setup, creating a farming routine,
 running it safely, troubleshooting, and the commands used by source users and

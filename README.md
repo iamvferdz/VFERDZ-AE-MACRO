@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.ico" width="80" alt="Cream's Macro — Anime Expeditions logo">
+  <img src="logo.ico" width="80" alt="Junsei — Anime Expeditions logo">
 </p>
 
-<h1 align="center">Cream's Macro | Anime Expeditions</h1>
+<h1 align="center">Junsei | Anime Expeditions</h1>
 
 <p align="center">
   <strong>Free, open-source auto-farm macro for the Roblox game Anime Expeditions</strong><br>
@@ -28,10 +28,6 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://discord.gg/FwU6ppjKNf">Discord</a> · <a href="https://www.youtube.com/@Cweamya">YouTube</a> · <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">Download</a>
-</p>
-
 > Looking for an **Anime Expeditions auto farm bot**, **Anime Expeditions macro**, or a way to **auto raid / auto story farm / auto expedition** in Anime Expeditions on Roblox? You're in the right place.
 
 ## Table of Contents
@@ -48,6 +44,10 @@
 - [License](#license)
 
 ## Features
+
+Junsei is an ongoing continuation of the original Anime Expeditions macro by
+**Cweamy**. The original creator is credited here with respect; this fork is
+maintained and extended by **Junsei**.
 
 - **Docked automation** — Roblox is embedded as a native child window inside the macro's own UI, not remote-controlled from outside, so clicks and key presses land exactly where they should.
 - **Task queue** — build a queue of Story, Raid, or Expedition tasks (map, stage/act/difficulty, Solo or Matchmaking, repeat count) and let the macro work through all of them in order.

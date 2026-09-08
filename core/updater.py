@@ -868,7 +868,7 @@ def stage_exe_update(new_exe_path: str) -> str:
 setlocal enabledelayedexpansion
 set LOG="{log_path}"
 echo ---- %date% %time% ---- > %LOG%
-echo Updating Cream's Macro -- please wait, this window closes itself...
+echo Updating Junsei -- please wait, this window closes itself...
 echo [1/5] Waiting for the app to close itself (image: {exe_name})... >> %LOG%
 rem taskkill is the SAFETY NET for a shutdown that hangs, not the way the app
 rem normally closes -- so wait for the app to go on its own FIRST and only

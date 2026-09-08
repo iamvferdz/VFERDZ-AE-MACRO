@@ -126,7 +126,7 @@ def count_template_blocks(blocks) -> int:
     if isinstance(blocks, list):
         return _count_block_list(blocks)
     if isinstance(blocks, dict):
-        # Known block phases in Creams Macro templates
+        # Known block phases in Junsei templates
         prestart = blocks.get("prestart") if isinstance(blocks.get("prestart"), list) else (blocks.get("before") if isinstance(blocks.get("before"), list) else [])
         battle = blocks.get("battle") if isinstance(blocks.get("battle"), list) else []
         legacy = (blocks.get("during") if isinstance(blocks.get("during"), list) else []) + (blocks.get("after") if isinstance(blocks.get("after"), list) else [])

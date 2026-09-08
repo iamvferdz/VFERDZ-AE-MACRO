@@ -1,5 +1,5 @@
 """
-Diagnostic module for Creams Macro.
+Diagnostic module for Junsei.
 Provides structured failure reporting and recovery actions.
 """
 
