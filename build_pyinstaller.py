@@ -18,7 +18,7 @@ Requires:
     py -3.12 -m pip install pyinstaller
     py -3.12 build_pyinstaller.py
 
-Output: dist/Junsei - Anime Expeditions.exe
+Output: dist/ae-junsei-macro.exe
 """
 import subprocess
 import sys
@@ -31,7 +31,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # auto-generated .spec file as an unescaped Python string literal
 # An apostrophe in the product name would break that file's own syntax. Nuitka took the name
 # as a plain filename argument, so this never came up there.
-EXE_NAME = "Junsei - Anime Expeditions"
+EXE_NAME = "ae-junsei-macro"
 
 # winforms.py imports win32 unconditionally even though edgechromium is the
 # backend actually used at runtime -- PyInstaller's own pywebview hook

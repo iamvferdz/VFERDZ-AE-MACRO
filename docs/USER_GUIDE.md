@@ -13,7 +13,7 @@ contributors.
 
 ### Windows release (recommended)
 
-1. Download `Creams-Macro-Anime-Expeditions-Windows.zip` from the
+1. Download `ae-junsei-macro-Windows.zip` from the
    [latest release](https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest).
 2. Extract the entire ZIP to a normal folder. Do not run the executable from
    inside the ZIP.

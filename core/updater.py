@@ -65,8 +65,8 @@ RELEASES_PAGE_URL = f"https://github.com/{GITHUB_REPO}/releases/latest"
 # platform's zip automatically. The Windows zip briefly shipped unsuffixed
 # (v0.3.0-v0.4.0 as published) -- renamed for symmetry once the mac zip
 # joined it.
-RELEASE_ZIP_NAME = ("ae-macro-macOS.zip" if sys.platform == "darwin"
-                     else "ae-macro-Windows.zip")
+RELEASE_ZIP_NAME = ("ae-junsei-macro-macOS.zip" if sys.platform == "darwin"
+                     else "ae-junsei-macro-Windows.zip")
 # BUNDLE_DIR, not APP_DIR -- VERSION ships as part of the app itself (it's
 # what identifies which release you're running), not user-owned data.
 VERSION_FILE = os.path.join(constants.BUNDLE_DIR, "VERSION")
@@ -551,7 +551,8 @@ def _get_release_zip_with_fallback(release_zip_url: str, log):
     the real name shouldn't get retried into confusion on legacy names)."""
     base, _, name = release_zip_url.rpartition("/")
     candidates = [release_zip_url]
-    for legacy in (RELEASE_ZIP_NAME, "Creams-Macro-Anime-Expeditions.zip"):
+    for legacy in (RELEASE_ZIP_NAME, "ae-macro-macOS.zip", "ae-macro-Windows.zip",
+                   "Creams-Macro-Anime-Expeditions.zip"):
         alt = f"{base}/{legacy}"
         if alt not in candidates:
             candidates.append(alt)

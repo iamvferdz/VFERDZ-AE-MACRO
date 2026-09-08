@@ -34,7 +34,7 @@ API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 # Must match release.yml's packaged Windows zip name exactly (dashes on
 # purpose -- GitHub rewrites spaces in asset filenames to dots, dashes
 # stay put). The bootstrapper is Windows-only, so always the -Windows zip.
-ZIP_ASSET_NAME = "Creams-Macro-Anime-Expeditions-Windows.zip"
+ZIP_ASSET_NAME = "ae-junsei-macro-Windows.zip"
 LOCAL_ZIP = os.path.join(APP_DIR, ".bootstrap_download.zip")
 VERSION_FILE = os.path.join(APP_DIR, ".bootstrap_version")
 
@@ -43,7 +43,7 @@ VERSION_FILE = os.path.join(APP_DIR, ".bootstrap_version")
 # updating"; this file used to name it literally, so the same rename would make
 # the bootstrapper extract everything correctly and then report
 # Keep the old asset name for compatibility with existing releases.
-_EXE_HINT = "Junsei - Anime Expeditions.exe"   # tried first; just a hint
+_EXE_HINT = "ae-junsei-macro.exe"   # tried first; just a hint
 
 
 def find_local_exe() -> str:
