@@ -1,0 +1,35 @@
+{
+  "name": "Summer Tidal Siege",
+  "events": [
+    {
+      "t": 0.0,
+      "key": "w",
+      "state": "down"
+    },
+    {
+      "t": 0.493,
+      "key": "w",
+      "state": "up"
+    },
+    {
+      "t": 1.04,
+      "key": "a",
+      "state": "down"
+    },
+    {
+      "t": 1.8,
+      "key": "a",
+      "state": "up"
+    },
+    {
+      "t": 2.772,
+      "key": "w",
+      "state": "down"
+    },
+    {
+      "t": 3.045,
+      "key": "w",
+      "state": "up"
+    }
+  ]
+}
