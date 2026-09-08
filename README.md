@@ -11,6 +11,11 @@
 </p>
 
 <p align="center">
+  <strong> Original Creator: <a href="https://github.com/Cweamy"> Cweamy </a>
+  <img src="https://img.shields.io/badge/Official%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Official Discord">
+</p>
+
+<p align="center">
   <a href="https://github.com/junssei/ae-macro/actions/workflows/ci.yml">
     <img src="https://github.com/junssei/ae-macro/actions/workflows/ci.yml/badge.svg" alt="CI">
   </a>
