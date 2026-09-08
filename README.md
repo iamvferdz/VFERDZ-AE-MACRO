@@ -2,7 +2,7 @@
   <img src="logo.ico" width="80" alt="Cream's Macro — Anime Expeditions logo">
 </p>
 
-<h1 align="center">Cream's Macro | Anime Expeditions</h1>
+<h1 align="center"> Anime Expeditions Macro | Modified Creams Macro </h1>
 
 <p align="center">
   <strong>Free, open-source auto-farm macro for the Roblox game Anime Expeditions</strong><br>
@@ -11,14 +11,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Cweamy/Anime-Expeditions-Creams-Macro?style=flat-square&color=blue" alt="Latest Release">
+  <a href="https://github.com/junssei/ae-macro/releases/latest">
+    <img src="https://img.shields.io/github/v/release/junssei/ae-macro?style=flat-square&color=blue" alt="Latest Release">
   </a>
-  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">
-    <img src="https://img.shields.io/github/downloads/Cweamy/Anime-Expeditions-Creams-Macro/total?style=flat-square&color=green" alt="Downloads">
+  <a href="https://github.com/junssei/ae-macro/releases/latest">
+    <img src="https://img.shields.io/github/downloads/junssei/ae-macro/total?style=flat-square&color=green" alt="Downloads">
   </a>
-  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/actions/workflows/ci.yml">
-    <img src="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/actions/workflows/ci.yml/badge.svg" alt="CI">
+  <a href="https://github.com/junssei/ae-macro/actions/workflows/ci.yml">
+    <img src="https://github.com/junssei/ae-macro/actions/workflows/ci.yml/badge.svg" alt="CI">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT">
