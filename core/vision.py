@@ -789,7 +789,7 @@ def find_in_gray_multiscale(haystack_gray: np.ndarray, name: str, template_dir: 
     size, the overwhelmingly common hit) before any rescaling starts, so
     the fallback images cost nothing when the primary one matches and the
     scale sweep only runs when every variant genuinely missed at 1x."""
-    for scale in (0.75, 0.85, 0.95, 1.0, 1.1, 1.2, 1.3, 1.4):
+    for scale in SCALE_FACTORS:
         for gray, mask in _scaled_templates(name, template_dir, scale):
             match = find_in_gray(haystack_gray, gray, threshold, mask)
             if match is not None:
