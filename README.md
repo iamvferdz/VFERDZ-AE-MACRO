@@ -25,11 +25,11 @@
 
 <p align="center">
   <strong>Original Creator of this Macro:</strong><a href="https://github.com/Cweamy"> Cweamy </a><br>
-  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro"> Original Macro Repo </a>
+  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro"> Original Macro Repo </a> · <a href="https://discord.gg/FwU6ppjKNf">Discord</a> 
 </p>
 
 <p align="center">
-  <a href="https://discord.gg/FwU6ppjKNf">Discord</a> · <a href="https://www.youtube.com/@Cweamya">YouTube</a> · <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">Download</a>
+  <a href="https://www.youtube.com/@iamjunsei">My YouTube</a> · <a href="https://github.com/junssei/ae-macro/releases/latest">This Macro Download</a>
 </p>
 
 > Looking for an **Anime Expeditions auto farm bot**, **Anime Expeditions macro**, or a way to **auto raid / auto story farm / auto expedition** in Anime Expeditions on Roblox? You're in the right place.
