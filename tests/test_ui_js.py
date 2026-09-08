@@ -233,6 +233,38 @@ def test_summer_portal_task_summary_shows_tier(tmp_path):
     assert "Tier 3" in out["title"]
 
 
+def test_summer_portal_change_rebuilds_tier_selector(tmp_path):
+    out = run_js("""
+        const TASK_DATA = {
+          summer: {
+            label: 'Summer',
+            modes: ['Event Mode', 'Portal Mode'],
+            portals: ['Summer Portal', 'Sky Ruins Portal'],
+            portalTiers: ['1', '2', '3', '4', '5', 'Secret'],
+            isSummer: true,
+          },
+        };
+        let taskCards = [{
+          id: 't1', mode: 'summer', summer_mode: 'Portal Mode',
+          map: 'Summer Portal', portal_tier: '3', repeat: 1,
+          play_mode: 'solo', macro: ''
+        }];
+        let renders = 0;
+        function findTask(id) { return taskCards.find(t => t.id === id); }
+        function updateQueueRowInPlace() {}
+        function renderTaskBuilder() { renders += 1; }
+        function saveTaskQueue() {}
+        eval(extract('setTaskProp'));
+        setTaskProp('t1', 'map', 'Sky Ruins Portal');
+        console.log(JSON.stringify({
+          portal: taskCards[0].map,
+          tier: taskCards[0].portal_tier,
+          renders,
+        }));
+    """, tmp_path)
+    assert out == {"portal": "Sky Ruins Portal", "tier": "1", "renders": 1}
+
+
 
 # ---------------------------------------------------------------------------
 # removeBlock: the deferred splice must not use a stale index

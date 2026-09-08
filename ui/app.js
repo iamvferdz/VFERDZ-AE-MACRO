@@ -2148,13 +2148,13 @@ async function saveWebhookSettings(silentSave) {
 const TASK_DATA = {
   story: {
     label: 'Story',
-    maps: ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town'],
+    maps: ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'],
     stages: ['1', '2', '3', '4', '5', 'Infinite', 'Mastery'],
     difficulties: ['Normal', 'Hard'],
   },
   raid: {
     label: 'Raid',
-    maps: ['Spirit City'],
+    maps: ['Spirit City', 'Snowy Castle'],
     stages: ['1', '2', '3'],
     fixedDifficulty: 'Hard',
   },
@@ -2705,7 +2705,7 @@ function setTaskProp(id, key, value) {
   // labels re-render on every change either way, but the Builder is only
   // rebuilt when the *shape* changed so typing in the Repeat field doesn't
   // lose focus mid-keystroke to an innerHTML swap.
-  const structural = ['mode', 'stage', 'summer_mode'];
+  const structural = ['mode', 'stage', 'summer_mode', 'map'];
   if (key === 'mode') {
     const d = TASK_DATA[t.mode];
     if (d.maps) t.map = d.maps[0];
@@ -3080,7 +3080,7 @@ const CHALLENGE_STAGE_SLOTS = ['1', '2', '3'];
 // list (TASK_DATA.story.maps) ever changes. This list is what renders the
 // Story Map Setup rows, so a map missing here cannot be assigned a Macro
 // Operation at all; tests/test_challenge_maps.py fails when it drifts.
-const CHALLENGE_STORY_MAPS = ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town'];
+const CHALLENGE_STORY_MAPS = ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'];
 let challengeState = null;
 
 function renderStoryMapSetupWarning(id, state, featureName) {
