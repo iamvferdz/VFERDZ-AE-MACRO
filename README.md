@@ -5,21 +5,16 @@
 <h1 align="center"> Anime Expeditions Macro | Modified Creams Macro </h1>
 
 <p align="center">
+  
+</p>
+
+<p align="center">
   <strong>Free, open-source auto-farm macro for the Roblox game Anime Expeditions</strong><br>
   Vision-based (screen capture + image matching) — no injection, no memory reading.<br>
   Docks Roblox directly inside its own window and automates the full Story/Raid/Expedition grind loop.
 </p>
 
 <p align="center">
-  <a href="https://github.com/junssei/ae-macro/releases/latest">
-    <img src="https://img.shields.io/github/v/release/junssei/ae-macro?style=flat-square&color=blue" alt="Latest Release">
-  </a>
-  <a href="https://github.com/junssei/ae-macro/releases/latest">
-    <img src="https://img.shields.io/github/downloads/junssei/ae-macro/total?style=flat-square&color=green" alt="Downloads">
-  </a>
-  <a href="https://github.com/junssei/ae-macro/actions/workflows/ci.yml">
-    <img src="https://github.com/junssei/ae-macro/actions/workflows/ci.yml/badge.svg" alt="CI">
-  </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT">
   </a>
@@ -29,6 +24,8 @@
 </p>
 
 <p align="center">
+  <p> Original Creator of this Macro: <a href="https://github.com/Cweamy"> Cweamy </a>
+  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro"> Original Macro Repo </a> 
   <a href="https://discord.gg/FwU6ppjKNf">Discord</a> · <a href="https://www.youtube.com/@Cweamya">YouTube</a> · <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">Download</a>
 </p>
 
