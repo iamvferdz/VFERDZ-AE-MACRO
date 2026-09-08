@@ -43,7 +43,7 @@ import requests
 
 from . import constants
 
-GITHUB_REPO = "Cweamy/Anime-Expeditions-Creams-Macro"
+GITHUB_REPO = "junssei/ae-macro"
 RELEASES_LATEST_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 RELEASES_PAGE_URL = f"https://github.com/{GITHUB_REPO}/releases/latest"
 # The packaged release zip (exe + the loose Assets/ folder side by side,
@@ -65,8 +65,8 @@ RELEASES_PAGE_URL = f"https://github.com/{GITHUB_REPO}/releases/latest"
 # platform's zip automatically. The Windows zip briefly shipped unsuffixed
 # (v0.3.0-v0.4.0 as published) -- renamed for symmetry once the mac zip
 # joined it.
-RELEASE_ZIP_NAME = ("Creams-Macro-Anime-Expeditions-macOS.zip" if sys.platform == "darwin"
-                     else "Creams-Macro-Anime-Expeditions-Windows.zip")
+RELEASE_ZIP_NAME = ("ae-macro-macOS.zip" if sys.platform == "darwin"
+                     else "ae-macro-Windows.zip")
 # BUNDLE_DIR, not APP_DIR -- VERSION ships as part of the app itself (it's
 # what identifies which release you're running), not user-owned data.
 VERSION_FILE = os.path.join(constants.BUNDLE_DIR, "VERSION")
@@ -171,7 +171,7 @@ def check_for_update(timeout: float = 6.0, log=None) -> dict:
     suffix = "-macos.zip" if sys.platform == "darwin" else "-windows.zip"
     release_zip_asset = (
         next((a for a in assets if a.get("name", "").lower().endswith(suffix)), None)
-        or next((a for a in assets if a.get("name", "").lower() == "creams-macro-anime-expeditions.zip"), None))
+        or next((a for a in assets if a.get("name", "").lower() == "ae-macro.zip"), None))
     return {
         "available": True,
         "version": tag,
