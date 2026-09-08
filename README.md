@@ -11,8 +11,13 @@
 </p>
 
 <p align="center">
-  <strong> Original Creator: <a href="https://github.com/Cweamy"> Cweamy </a>
-  <img src="https://img.shields.io/badge/Official%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Official Discord">
+  <strong> Original Creator: <a href="https://github.com/Cweamy"> Cweamy</a><br>
+  <a href="https://discord.com/invite/FwU6ppjKNf">
+    <img src="https://img.shields.io/badge/Official%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Official Discord">
+  </a>
+  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="Official Github Macro">
+  </a>
 </p>
 
 <p align="center">
