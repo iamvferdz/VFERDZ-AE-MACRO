@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <p><strong>Original Creator of this Macro:</strong><a href="https://github.com/Cweamy"> Cweamy </a><br>
+  <p><strong>Original Creator of this Macro:</strong><a href="https://github.com/Cweamy"> Cweamy </a></p><br>
   <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro"> Original Macro Repo </a> <br>
   <a href="https://discord.gg/FwU6ppjKNf">Discord</a> · <a href="https://www.youtube.com/@Cweamya">YouTube</a> · <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest">Download</a>
 </p>
