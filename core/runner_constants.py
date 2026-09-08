@@ -423,7 +423,7 @@ EXPEDITION_MAP_IMAGES = {
 # scrolling map-CARD search used to pick a map by hand -- these instead
 # confirm which map is already showing). Mirrors main.py's
 # CHALLENGE_STORY_MAPS and ui/app.js's TASK_DATA.story.maps.
-CHALLENGE_STORY_MAPS = ["School Grounds", "Rose Kingdom", "Fairy King Forest", "King's Tomb", "Flower Forest", "East Town"]
+CHALLENGE_STORY_MAPS = ["School Grounds", "Rose Kingdom", "Fairy King Forest", "King's Tomb", "Flower Forest", "East Town", "Crimson Shore"]
 # Daily Challenge shows its map as a ~10px label rather than the art the
 # image search above needs, so _detect_challenge_map_ocr falls back to
 # reading it. One distinctive lowercase word per map, fuzzy-matched against
@@ -441,6 +441,7 @@ CHALLENGE_MAP_OCR_ALIASES = {
     "King's Tomb": "tomb",
     "Flower Forest": "flower",
     "East Town": "east",
+    "Crimson Shore": "shore",
 }
 # Words the map label carries that never identify a map ("Grounds - Act 1").
 # Scored against an alias they are just noise that can out-rank the real

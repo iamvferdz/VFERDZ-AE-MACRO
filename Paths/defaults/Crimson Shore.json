@@ -1,0 +1,15 @@
+{
+  "name": "Crimson Shore",
+  "events": [
+    {
+      "t": 0.0,
+      "key": "s",
+      "state": "down"
+    },
+    {
+      "t": 0.821,
+      "key": "s",
+      "state": "up"
+    }
+  ]
+}

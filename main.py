@@ -219,7 +219,7 @@ RUN_HISTORY_LIMIT = 50  # oldest entries drop off past this -- a running log, no
 # counts and the once-a-day Daily Challenge use the game's shared 00:00 UTC
 # rollover; the independent Regular Challenge stage-availability clock still
 # rotates every :00/:30.
-CHALLENGE_STORY_MAPS = ["School Grounds", "Rose Kingdom", "Fairy King Forest", "King's Tomb", "Flower Forest", "East Town"]
+CHALLENGE_STORY_MAPS = ["School Grounds", "Rose Kingdom", "Fairy King Forest", "King's Tomb", "Flower Forest", "East Town", "Crimson Shore"]
 CHALLENGE_STAGE_SLOTS = ["1", "2", "3"]
 CHALLENGE_DAILY_CAP = 10  # fixed, not user-editable -- see get_challenge_settings
 CHALLENGE_RESET_SCHEDULE = "utc_midnight_v1"

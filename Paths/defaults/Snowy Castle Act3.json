@@ -1,0 +1,25 @@
+{
+  "name": "Snowy Castle Act3",
+  "events": [
+    {
+      "t": 0.0,
+      "key": "a",
+      "state": "down"
+    },
+    {
+      "t": 0.761,
+      "key": "a",
+      "state": "up"
+    },
+    {
+      "t": 1.584,
+      "key": "w",
+      "state": "down"
+    },
+    {
+      "t": 1.857,
+      "key": "w",
+      "state": "up"
+    }
+  ]
+}

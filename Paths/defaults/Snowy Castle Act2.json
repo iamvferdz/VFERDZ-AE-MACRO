@@ -1,0 +1,25 @@
+{
+  "name": "Snowy Castle Act2",
+  "events": [
+    {
+      "t": 0.0,
+      "key": "d",
+      "state": "down"
+    },
+    {
+      "t": 0.821,
+      "key": "d",
+      "state": "up"
+    },
+    {
+      "t": 1.216,
+      "key": "s",
+      "state": "down"
+    },
+    {
+      "t": 2.069,
+      "key": "s",
+      "state": "up"
+    }
+  ]
+}
