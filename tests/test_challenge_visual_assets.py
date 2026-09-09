@@ -20,7 +20,8 @@ from core import vision
     ),
 )
 def test_current_challenge_variants_survive_small_ui_scale_shift(tmp_path, name, filename):
-    source = Path(vision.UI_ASSETS_DIR, name, filename)
+    source = Path(vision.template_variant_paths(name)[0])
+    assert source.exists()
     template = cv2.imread(str(source), cv2.IMREAD_GRAYSCALE)
     assert template is not None
 
@@ -56,7 +57,7 @@ def test_current_challenge_variants_survive_small_ui_scale_shift(tmp_path, name,
 )
 @pytest.mark.parametrize("scale", (0.85, 1.15))
 def test_daily_challenge_variants_cover_fifteen_percent_rendering_shift(name, filename, scale):
-    source = Path(vision.UI_ASSETS_DIR, name, filename)
+    source = Path(vision.template_variant_paths(name)[0])
     template = cv2.imread(str(source), cv2.IMREAD_GRAYSCALE)
     assert template is not None
 

@@ -68,6 +68,7 @@ class DailyEntryProbe(ChallengeProbe):
     def __init__(self):
         super().__init__()
         self.clicked = []
+        self._mouse = object()
         self._open_challenge_screen = lambda *_args: True
         self._set_status = lambda **_kwargs: None
         self._checkpoint = lambda _stop: False
@@ -81,17 +82,31 @@ class DailyEntryProbe(ChallengeProbe):
 
 def test_daily_challenge_clicks_tab_then_stage_card(monkeypatch):
     probe = DailyEntryProbe()
+    image_clicks = []
+    probe._click_daily_image_or_coordinate = (
+        lambda _hwnd, _stop, image_name, _coord_name, _label:
+        image_clicks.append(image_name) or True
+    )
+    availability_reads = iter([None, None, None])
+    monkeypatch.setattr(
+        vision, "find_color_image",
+        lambda *_args, **_kwargs: next(availability_reads),
+    )
     monkeypatch.setattr(vision, "find_image", lambda *_args, **_kwargs: None)
 
     result = ChallengeOps._enter_daily_challenge_stage(
         probe, 123, threading.Event(), "solo", {}, {})
 
     assert result == "entered"
-    assert probe.clicked == ["daily_challenge_available", "daily_challenge_stage"]
+    assert image_clicks == ["daily_challenge_available", "daily_challenge_stage"]
 
 
 def test_daily_challenge_unavailable_returns_to_lobby_without_clicking(monkeypatch):
     probe = DailyEntryProbe()
+    monkeypatch.setattr(
+        vision, "find_color_image",
+        lambda *_args, **_kwargs: {"score": 0.98},
+    )
     monkeypatch.setattr(
         vision, "find_image",
         lambda *_args, **_kwargs: {"score": 0.98},

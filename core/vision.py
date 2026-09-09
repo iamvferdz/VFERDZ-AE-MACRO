@@ -161,7 +161,7 @@ def _effective_threshold(name: str, threshold: float) -> float:
 # misses. Kept to a modest +-10% range -- a real mismatch bigger than that
 # has never been reported, and a wider range costs more per miss for no
 # observed benefit.
-SCALE_FACTORS = (1.0, 0.95, 1.05, 0.90, 1.10)
+SCALE_FACTORS = (1.0, 0.95, 1.05, 0.90, 1.10, 0.85, 1.15)
 
 
 class TemplateNotFound(Exception):
@@ -947,7 +947,7 @@ def find_color_image(hwnd: int, name: str, region: tuple = None, threshold: floa
                 x, y = location
                 best = {"x": x, "y": y, "w": tw, "h": th,
                         "cx": x + tw // 2, "cy": y + th // 2, "score": float(score)}
-    if best is None or best["score"] < threshold:
+    if best is None or best["score"] < _effective_threshold(name, threshold):
         return None
     if region is not None:
         for key in ("x", "cx"):
