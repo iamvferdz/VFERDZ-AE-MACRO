@@ -441,7 +441,11 @@ class ChallengeOps:
         if not self._open_challenge_screen(hwnd, stop_event):
             return None
         try:
-            unavailable = vision.find_image(hwnd, "daily_challenge_unavailable", threshold=0.75)
+            unavailable = vision.find_color_image(
+                hwnd, "daily_challenge_unavailable")
+            if unavailable is None:
+                unavailable = vision.find_image(
+                    hwnd, "daily_challenge_unavailable")
         except vision.TemplateNotFound as exc:
             self._log(f"[Macro] Can't check Daily Challenge availability: {exc}")
             return None
@@ -454,38 +458,46 @@ class ChallengeOps:
             return "unavailable" if self._recover_to_lobby(hwnd, stop_event) else None
 
         self._set_status(action="Clicking Daily Challenge...")
-        avail_match = self._click_found_image(
-            hwnd, "daily_challenge_available", CHALLENGE_SCREEN_TIMEOUT, stop_event, threshold=0.75)
-        if avail_match is None:
-            if stop_event is not None and stop_event.is_set():
-                return None
-            # Fallback: click Daily Challenge tab on left sidebar
-            tab_x, tab_y = self._cxy("daily_challenge_tab")
-            self._log(f'[Macro] "daily_challenge_available" template missed -- using fallback tab click at ({tab_x}, {tab_y}).')
-            left, top, _, _ = wm.get_window_rect_screen(hwnd)
-            self._mouse.click(left + tab_x, top + tab_y)
-            time.sleep(0.5)
+        self._click_daily_image_or_coordinate(
+            hwnd, stop_event, "daily_challenge_available", "daily_challenge_tab",
+            "Daily Challenge tab")
 
         if self._checkpoint(stop_event):
             return None
         self._set_status(action="Selecting Daily Challenge stage...")
-        stage_match = self._click_found_image(
-            hwnd, "daily_challenge_stage", CHALLENGE_SCREEN_TIMEOUT, stop_event, threshold=0.75)
-        if stage_match is None:
-            if stop_event is not None and stop_event.is_set():
-                return None
-            # Fallback: click Daily Challenge stage card on right panel
-            card_x, card_y = self._cxy("daily_challenge_stage")
-            self._log(f'[Macro] "daily_challenge_stage" template missed -- using fallback card click at ({card_x}, {card_y}).')
-            left, top, _, _ = wm.get_window_rect_screen(hwnd)
-            self._mouse.click(left + card_x, top + card_y)
-            time.sleep(0.5)
+        self._click_daily_image_or_coordinate(
+            hwnd, stop_event, "daily_challenge_stage", "daily_challenge_stage",
+            "Daily Challenge stage")
 
         if self._checkpoint(stop_event):
             return None
         if not self._enter_selected_challenge(hwnd, stop_event, play_mode, coords, webhook, daily=True):
             return None
         return "entered"
+
+    def _click_daily_image_or_coordinate(self, hwnd, stop_event: threading.Event, image_name: str,
+                                         coord_name: str, label: str) -> bool:
+        """Use an Image Manager crop when it is visible, otherwise mirror the
+        reliable Regular Challenge coordinate click without a long dead wait."""
+        if self._checkpoint(stop_event):
+            return False
+        match = None
+        try:
+            match = vision.find_color_image(hwnd, image_name)
+            if match is None:
+                match = vision.find_image(hwnd, image_name)
+        except vision.TemplateNotFound:
+            match = None
+        if match is not None:
+            self._log(f'[Macro] Found "{image_name}" (score {match["score"]:.2f}) -- clicking it.')
+            vision.click_match(self._mouse, hwnd, match)
+        else:
+            x, y = self._cxy(coord_name)
+            self._log(f'[Macro] {label} image not visible -- clicking configured position at ({x}, {y}).')
+            left, top, _, _ = wm.get_window_rect_screen(hwnd)
+            self._mouse.click(left + x, top + y)
+        time.sleep(0.5)
+        return not self._checkpoint(stop_event)
 
     def _open_challenge_screen(self, hwnd, stop_event: threading.Event) -> bool:
         """Lobby -> Play -> Challenge and wait for the panel to finish loading."""
@@ -543,4 +555,3 @@ class ChallengeOps:
             if not self._click_start_and_wait_teleport(hwnd, stop_event, webhook, challenge_task_stub):
                 return False
         return not self._checkpoint(stop_event)
-

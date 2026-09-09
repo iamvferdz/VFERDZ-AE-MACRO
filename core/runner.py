@@ -3495,7 +3495,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         return False
 
     def _click_found_image(self, hwnd, name: str, timeout: float, stop_event: threading.Event = None,
-                            shuffle: bool = False, threshold: float = vision.DEFAULT_THRESHOLD, region: tuple = None) -> dict:
+                            shuffle: bool = False, threshold: float = vision.DEFAULT_THRESHOLD,
+                            region: tuple = None, color: bool = False) -> dict:
         """Shared wait-for-it-then-click for a plain nav button (nav_settings,
         nav_search, ...) -- no per-button quirks like Story/Play have, so one
         helper covers all of them instead of a bespoke method each.
@@ -3516,7 +3517,22 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         re-searching for the same button a second time.
         """
         try:
-            match = vision.wait_for_image(hwnd, name, region=region, timeout=timeout, threshold=threshold, stop_event=stop_event)
+            if color:
+                # Color matching distinguishes stateful UI art, but grayscale
+                # remains a useful fallback when capture compression or a
+                # graphics setting changes the colors of a saved crop.
+                color_timeout = timeout / 2
+                match = vision.wait_for_color_image(
+                    hwnd, name, region=region, timeout=color_timeout,
+                    threshold=threshold, stop_event=stop_event)
+                if match is None and (stop_event is None or not stop_event.is_set()):
+                    match = vision.wait_for_image(
+                        hwnd, name, region=region, timeout=timeout - color_timeout,
+                        threshold=threshold, stop_event=stop_event)
+            else:
+                match = vision.wait_for_image(
+                    hwnd, name, region=region, timeout=timeout,
+                    threshold=threshold, stop_event=stop_event)
         except vision.TemplateNotFound as exc:
             self._log(f"[Macro] {exc}")
             return None
