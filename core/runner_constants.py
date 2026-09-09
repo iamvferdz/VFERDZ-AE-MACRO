@@ -782,7 +782,7 @@ TEAM_LOADOUT_SCROLL_SETTLE = 0.5
 
 # Wait for Wave (see _run_wait_wave_tick) -- the "<current> / <max> wave"
 # HUD badge, in the docked game window's own client coordinates.
-WAVE_REGION = (467, 21, 104, 61)
+WAVE_REGION = (467, 16, 130, 45)
 # Expedition puts the same badge somewhere else, and the box above does not
 # reach it: it starts 50px right of where Expedition renders the badge, so
 # "3 / 5 wave" is captured as just "5 wave". read_wave reports NO MAXIMUM for
@@ -793,7 +793,7 @@ WAVE_REGION = (467, 21, 104, 61)
 # slash-bearing votes cannot rescue that: with the slash outside the crop,
 # every vote is current-only.
 #
-# It is also 61px tall against a 33px badge, reaching into the
+# The shared box is 45px tall against a 33px badge, reaching into the
 # "<n> / <max> units" chip underneath -- the same digits-and-slash shape,
 # feeding a second number to the same parse.
 #

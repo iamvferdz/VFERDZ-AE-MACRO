@@ -667,7 +667,7 @@ class BlockOps:
 
         try:
             from core import wave as wave_module
-            image = vision.capture_window_region_bgr(hwnd, self._wave_region)
+            image = vision.capture_game_bgr(hwnd, self._wave_region)
             if image is None or image.size == 0:
                 raise RuntimeError("Roblox window capture returned no pixels")
             current, maximum = wave_module.read_wave(image)

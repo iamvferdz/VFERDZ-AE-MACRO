@@ -2803,8 +2803,8 @@ class Api:
 
     def read_current_wave(self) -> dict:
         """Polled by the Wave Monitor pop-out: reads the wave HUD from
-        Roblox's OWN window contents (works while tabbed out -- see
-        vision.capture_window_region_bgr) and returns the OCR reading plus
+        Roblox's rendered window capture (with screen/WGC fallback when
+        available) and returns the OCR reading plus
         the raw crop as a data URI, so the monitor can show the actual
         pixels even when OCR misreads a busy background."""
         import base64
@@ -2814,7 +2814,7 @@ class Api:
         if not hwnd or not wm.is_window(hwnd):
             return {"ok": False, "reason": "no_roblox"}
         try:
-            img = vision.capture_window_region_bgr(hwnd, WAVE_REGION)
+            img = vision.capture_game_bgr(hwnd, WAVE_REGION)
             if img is None or img.size == 0:
                 return {"ok": False, "reason": "capture_failed"}
             current, maximum = wave_module.read_wave(img)
