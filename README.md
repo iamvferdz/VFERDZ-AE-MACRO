@@ -12,6 +12,8 @@
 
 <p align="center">
   <strong> Maintainer: <a href="https://github.com/iamvferdz"> VFERDZ</a><br>
+  Original creator: <a href="https://github.com/Cweamy">Cweamy</a> —
+  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro">official original repository</a><br>
   <a href="https://discord.com/invite/FwU6ppjKNf">
     <img src="https://img.shields.io/badge/Official%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Official Discord">
   </a>
@@ -49,7 +51,12 @@
 
 ## Features
 
-VFERDZ-AE-MACRO is an Anime Expeditions macro maintained by **VFERDZ**.
+VFERDZ-AE-MACRO is an updated and maintained version of the Anime Expeditions
+macro originally created by **[Cweamy](https://github.com/Cweamy)**. This
+repository is maintained by **[VFERDZ](https://github.com/iamvferdz)**, who
+continues the project with improvements, fixes, and new game updates while the
+original creator is inactive. Please support and credit the original project
+through its [official repository](https://github.com/Cweamy/Anime-Expeditions-Creams-Macro).
 
 - **Docked automation** — Roblox is embedded as a native child window inside the macro's own UI, not remote-controlled from outside, so clicks and key presses land exactly where they should.
 - **Task queue** — build a queue of Story, Raid, or Expedition tasks (map, stage/act/difficulty, Solo or Matchmaking, repeat count) and let the macro work through all of them in order.
