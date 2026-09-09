@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="logo.ico" width="80" alt="Junsei — Anime Expeditions logo">
+  <img src="logo.ico" width="80" alt="VFERDZ — Anime Expeditions logo">
 </p>
 
-<h1 align="center">Junsei | Anime Expeditions</h1>
+<h1 align="center">VFERDZ | Anime Expeditions</h1>
 
 <p align="center">
   <strong>Free, open-source auto-farm macro for the Roblox game Anime Expeditions</strong><br>
@@ -11,18 +11,18 @@
 </p>
 
 <p align="center">
-  <strong> Original Creator: <a href="https://github.com/Cweamy"> Cweamy</a><br>
+  <strong> Maintainer: <a href="https://github.com/iamvferdz"> VFERDZ</a><br>
   <a href="https://discord.com/invite/FwU6ppjKNf">
     <img src="https://img.shields.io/badge/Official%20Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Official Discord">
   </a>
-  <a href="https://github.com/Cweamy/Anime-Expeditions-Creams-Macro">
+  <a href="https://github.com/iamvferdz/VFERDZ-AE-MACRO">
     <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="Official Github Macro">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/junssei/ae-macro/actions/workflows/ci.yml">
-    <img src="https://github.com/junssei/ae-macro/actions/workflows/ci.yml/badge.svg" alt="CI">
+  <a href="https://github.com/iamvferdz/VFERDZ-AE-MACRO/actions/workflows/ci.yml">
+    <img src="https://github.com/iamvferdz/VFERDZ-AE-MACRO/actions/workflows/ci.yml/badge.svg" alt="CI">
   </a>
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License: MIT">
@@ -49,9 +49,7 @@
 
 ## Features
 
-Junsei is an ongoing continuation of the original Anime Expeditions macro by
-**Cweamy**. The original creator is credited here with respect; this fork is
-maintained and extended by **Junsei**.
+VFERDZ-AE-MACRO is an Anime Expeditions macro maintained by **VFERDZ**.
 
 - **Docked automation** — Roblox is embedded as a native child window inside the macro's own UI, not remote-controlled from outside, so clicks and key presses land exactly where they should.
 - **Task queue** — build a queue of Story, Raid, or Expedition tasks (map, stage/act/difficulty, Solo or Matchmaking, repeat count) and let the macro work through all of them in order.
@@ -83,9 +81,9 @@ maintained and extended by **Junsei**.
 
 No `git clone`, no Python needed.
 
-1. Open the [**Releases page**](https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest)
+1. Open the [**Releases page**](https://github.com/iamvferdz/VFERDZ-AE-MACRO/releases/latest)
 2. The newest release is shown at the top
-3. Under **Assets**, download **`ae-junsei-macro-Windows.zip`** (or `ae-junsei-macro-macOS.zip` on a Mac)
+3. Under **Assets**, download **`VFERDZ-AE-MACRO-Windows.zip`** (or `VFERDZ-AE-MACRO-macOS.zip` on a Mac)
 4. Extract it anywhere — you get the app `.exe` with an `Assets/` folder next to it — and run the exe
 
 The `Assets/` folder is every image the macro searches for on screen, kept **outside** the exe on purpose: one folder per button/text, and you can open, replace, or add extra crops freely (Settings > General > **Image Manager** captures and crops them for you, straight from your Roblox screen). Updates never overwrite images you've changed or added.
@@ -99,14 +97,14 @@ The only other thing you need is [Tesseract OCR](https://github.com/UB-Mannheim/
 ### Option B: Run from source
 
 ```bash
-git clone https://github.com/Cweamy/Anime-Expeditions-Creams-Macro.git
-cd Anime-Expeditions-Creams-Macro
+git clone https://github.com/iamvferdz/VFERDZ-AE-MACRO.git
+cd VFERDZ-AE-MACRO
 pip install -r requirements.txt
 ```
 
 ### macOS (experimental — testers wanted)
 
-Releases also publish **`ae-junsei-macro-macOS.zip`** (an Intel/x86_64 `.app` + the same editable `Assets/` folder), and source runs work via `./run.sh`. Key differences and setup:
+Releases also publish **`VFERDZ-AE-MACRO-macOS.zip`** (an Intel/x86_64 `.app` + the same editable `Assets/` folder), and source runs work via `./run.sh`. Key differences and setup:
 
 1. **Permissions (required):** System Settings > Privacy & Security — grant the app (or your terminal, for source runs) **Accessibility**, **Input Monitoring**, and **Screen Recording**. Without them, clicks silently do nothing and captures come back black. The app logs a warning at startup if Accessibility is missing.
 2. **Side-by-side, not docked:** macOS can't embed another app's window, so Roblox is auto-arranged *next to* the control panel at the exact reference size instead of inside it. The panel sizes itself to whatever width the game doesn't need and to the full height of the screen's *visible* area (menu bar and Dock excluded), so nothing ends up under either.
@@ -185,7 +183,7 @@ build_bootstrap.py # builds bootstrap.py into its own small exe
 
 Issues and PRs are welcome. Every push/PR runs CI on Windows: the `tests/` unit suite under pytest, a compile check over every Python file, and a syntax check of `ui/app.js`. Run the suite locally with `pip install -r requirements-dev.txt` then `python -m pytest tests/`. It only covers the pure-logic modules (settings, pacing, webhook, and friends), so please also describe how you tested a change manually in your PR.
 
-To cut a release: bump `VERSION`, commit, then tag with an **annotated** tag whose message is a short, human-readable changelog: `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`. That message becomes both the GitHub Release body and what gets posted to Discord (see below) — a lightweight tag (no `-a`/`-m`) falls back to just the tagged commit's own message, which is usually not what you want announced. Pushing the tag triggers the release workflow, which builds `ae-junsei-macro.exe` with PyInstaller (see `build_pyinstaller.py`), packages it together with the user-editable `Assets/` folder into `ae-junsei-macro-Windows.zip` (a macOS job builds `ae-junsei-macro-macOS.zip`) — the per-platform zips are the only uploaded assets, which new installs, the auto-updater, and any bootstrapper copies all read from — and publishes a GitHub Release.
+To cut a release: bump `VERSION`, commit, then tag with an **annotated** tag whose message is a short, human-readable changelog: `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`. That message becomes both the GitHub Release body and what gets posted to Discord (see below) — a lightweight tag (no `-a`/`-m`) falls back to just the tagged commit's own message, which is usually not what you want announced. Pushing the tag triggers the release workflow, which builds `VFERDZ-AE-MACRO.exe` with PyInstaller (see `build_pyinstaller.py`), packages it together with the user-editable `Assets/` folder into `VFERDZ-AE-MACRO-Windows.zip` (a macOS job builds `VFERDZ-AE-MACRO-macOS.zip`) — the per-platform zips are the only uploaded assets, which new installs, the auto-updater, and any bootstrapper copies all read from — and publishes a GitHub Release.
 
 Every push to `main` posts a one-line summary to a Discord "git log" channel; every tagged release posts its changelog to a separate Discord "update log" channel. Both are wired via `DISCORD_GIT_LOGS_WEBHOOK`/`DISCORD_UPDATE_LOGS_WEBHOOK` repo secrets (Settings > Secrets and variables > Actions) — unset in a fork, so both steps just no-op instead of failing.
 

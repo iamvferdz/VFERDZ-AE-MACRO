@@ -18,7 +18,7 @@ Requires:
     py -3.12 -m pip install pyinstaller
     py -3.12 build_pyinstaller.py
 
-Output: dist/ae-junsei-macro.exe
+Output: dist/VFERDZ-AE-MACRO.exe
 """
 import subprocess
 import sys
@@ -31,7 +31,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # auto-generated .spec file as an unescaped Python string literal
 # An apostrophe in the product name would break that file's own syntax. Nuitka took the name
 # as a plain filename argument, so this never came up there.
-EXE_NAME = "ae-junsei-macro"
+EXE_NAME = "VFERDZ-AE-MACRO"
 
 # winforms.py imports win32 unconditionally even though edgechromium is the
 # backend actually used at runtime -- PyInstaller's own pywebview hook
@@ -134,14 +134,14 @@ def _windows_version_file():
     mask=0x3f, flags=0x0, OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040904B0', [
-      StringStruct('CompanyName', "Junsei"),
-      StringStruct('FileDescription', "Anime Expeditions Macro"),
+      StringStruct('CompanyName', "VFERDZ"),
+      StringStruct('FileDescription', "VFERDZ Anime Expeditions Macro"),
       StringStruct('FileVersion', "{ver}"),
       StringStruct('InternalName', "{EXE_NAME}"),
       StringStruct('OriginalFilename', "{EXE_NAME}.exe"),
-      StringStruct('ProductName', "Junsei - Anime Expeditions"),
+      StringStruct('ProductName', "VFERDZ-AE-MACRO"),
       StringStruct('ProductVersion', "{ver}"),
-      StringStruct('LegalCopyright', "Junsei; original project by Cweamy"),
+      StringStruct('LegalCopyright', "VFERDZ"),
     ])]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]
@@ -191,7 +191,7 @@ if sys.platform == "darwin":
     # ONE identity across versions. (The other half is the codesign step after
     # the build below -- a stable self-signed CERT identity in CI releases,
     # ad-hoc locally -- see that block for the full story.)
-    cmd.append("--osx-bundle-identifier=com.cweamy.creams-macro-anime-expeditions")
+    cmd.append("--osx-bundle-identifier=com.vferdz.ae-macro")
 else:
     cmd.append(f"--icon={os.path.join(ROOT, 'logo.ico')}")
     version_file = _windows_version_file()  # AV-friendly metadata, Windows only

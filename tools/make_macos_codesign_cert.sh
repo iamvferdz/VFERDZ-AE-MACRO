@@ -30,11 +30,11 @@
 # a stable code identity that TCC keys permissions to.
 #
 # The bundle identifier must stay pinned too: build_pyinstaller.py already
-# passes --osx-bundle-identifier=com.cweamy.creams-macro-anime-expeditions.
+# passes --osx-bundle-identifier=com.vferdz.ae-macro.
 # The bundle id is carried here in the OU (organizationalUnit) field of the
 # certificate subject so this identity is visibly paired with that app; the
 # CN stays short on purpose -- X.509 caps commonName at 64 characters, and
-# "Creams Macro Code Signing (com.cweamy.creams-macro-anime-expeditions)"
+# "VFERDZ-AE-MACRO Code Signing (com.vferdz.ae-macro)"
 # would be 70 and blow up inside `openssl req`.
 #
 # RUN ONCE, ON ANY MACHINE WITH OpenSSL
@@ -66,8 +66,8 @@ set -euo pipefail
 # macos-asset.yml), so codesign finds this exact cert. Keep it <= 64 chars:
 # X.509 hard-caps commonName at 64, so the bundle identifier rides in OU
 # instead (still part of the subject, still pairs cert <-> app).
-CN="Creams Macro Code Signing"
-OU="com.cweamy.creams-macro-anime-expeditions"
+CN="VFERDZ-AE-MACRO Code Signing"
+OU="com.vferdz.ae-macro"
 # Apostrophe-free on purpose: openssl config strips the quote chars, so
 # "Cream's Macro" would land in the subject as "Creams Macro" anyway. This
 # matches the exe/build's own EXE_NAME spelling.
@@ -84,7 +84,7 @@ P12="$OUT_DIR/codesign.p12"
 P12_B64="$OUT_DIR/codesign.p12.b64"
 
 # GitHub repo the secrets belong to (used only in the printed `gh` commands).
-GITHUB_REPO="Cweamy/Anime-Expeditions-Creams-Macro"
+GITHUB_REPO="iamvferdz/VFERDZ-AE-MACRO"
 
 usage() {
     cat >&2 <<EOF

@@ -1,4 +1,4 @@
-# Junsei: Complete User Guide
+# VFERDZ-AE-MACRO: Complete User Guide
 
 This guide covers installation, first-time setup, creating a farming routine,
 running it safely, troubleshooting, and the commands used by source users and
@@ -13,8 +13,8 @@ contributors.
 
 ### Windows release (recommended)
 
-1. Download `ae-junsei-macro-Windows.zip` from the
-   [latest release](https://github.com/Cweamy/Anime-Expeditions-Creams-Macro/releases/latest).
+1. Download `VFERDZ-AE-MACRO-Windows.zip` from the
+   [latest release](https://github.com/iamvferdz/VFERDZ-AE-MACRO/releases/latest).
 2. Extract the entire ZIP to a normal folder. Do not run the executable from
    inside the ZIP.
 3. Keep the executable and `Assets` folder together.
@@ -29,8 +29,8 @@ the macro can run without OCR.
 Open PowerShell and run:
 
 ```powershell
-git clone https://github.com/Cweamy/Anime-Expeditions-Creams-Macro.git
-Set-Location Anime-Expeditions-Creams-Macro
+git clone https://github.com/iamvferdz/VFERDZ-AE-MACRO.git
+Set-Location VFERDZ-AE-MACRO
 py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
@@ -41,7 +41,7 @@ python main.py
 On later launches:
 
 ```powershell
-Set-Location Anime-Expeditions-Creams-Macro
+Set-Location VFERDZ-AE-MACRO
 .\.venv\Scripts\Activate.ps1
 python main.py
 ```
@@ -53,8 +53,8 @@ You can also double-click `run.bat` after installing the dependencies.
 In Terminal:
 
 ```bash
-git clone https://github.com/junssei/ae-macro.git
-cd ae-macro
+git clone https://github.com/iamvferdz/VFERDZ-AE-MACRO.git
+cd VFERDZ-AE-MACRO
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --upgrade pip

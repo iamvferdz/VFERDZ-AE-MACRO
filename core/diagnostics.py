@@ -1,5 +1,5 @@
 """
-Diagnostic module for Junsei.
+Diagnostic module for VFERDZ-AE-MACRO.
 Provides structured failure reporting and recovery actions.
 """
 

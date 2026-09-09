@@ -10,14 +10,14 @@ Requires:
     py -3.12 -m pip install pyinstaller
     py -3.12 build_bootstrap.py
 
-Output: dist/ae-junsei-macro-bootstrapper.exe
+Output: dist/VFERDZ-AE-MACRO-bootstrapper.exe
 """
 import subprocess
 import sys
 import os
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-EXE_NAME = "ae-junsei-macro-bootstrapper"  # see build_pyinstaller.py's EXE_NAME comment
+EXE_NAME = "VFERDZ-AE-MACRO-bootstrapper"  # see build_pyinstaller.py's EXE_NAME comment
 
 cmd = [
     sys.executable, "-m", "PyInstaller",

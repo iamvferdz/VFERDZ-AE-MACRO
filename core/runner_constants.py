@@ -605,7 +605,7 @@ REJOIN_DEEPLINK = f"roblox://experiences/start?placeId={PLACE_ID}"
 # runner._send_result_webhook) -- the community Discord, the source repo,
 # and the creator's YouTube.
 DISCORD_INVITE_URL = "https://discord.gg/cgua6CZDst"
-GITHUB_REPO_URL = "https://github.com/Cweamy/Anime-Expeditions-Creams-Macro"
+GITHUB_REPO_URL = "https://github.com/iamvferdz/VFERDZ-AE-MACRO"
 YOUTUBE_URL = "https://www.youtube.com/@Cweamya"
 REJOIN_TIMEOUT = 90.0  # relaunching Roblox from scratch can take a while
 REJOIN_POLL_INTERVAL = 2.0

@@ -1,5 +1,5 @@
 """
-Tiny bootstrapper for Junsei | Anime Expeditions.
+Tiny bootstrapper for VFERDZ MACRO | Anime Expeditions.
 
 Downloads the real app from GitHub Releases on first run (or when a newer
 version is out) and launches it. Built as its own separate, much smaller
@@ -28,13 +28,13 @@ import zipfile
 import requests
 
 APP_DIR = os.path.dirname(os.path.abspath(sys.argv[0]))
-GITHUB_REPO = "Cweamy/Anime-Expeditions-Creams-Macro"
+GITHUB_REPO = "iamvferdz/VFERDZ-AE-MACRO"
 RELEASES_PAGE = f"https://github.com/{GITHUB_REPO}/releases/latest"
 API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 # Must match release.yml's packaged Windows zip name exactly (dashes on
 # purpose -- GitHub rewrites spaces in asset filenames to dots, dashes
 # stay put). The bootstrapper is Windows-only, so always the -Windows zip.
-ZIP_ASSET_NAME = "ae-junsei-macro-Windows.zip"
+ZIP_ASSET_NAME = "VFERDZ-AE-MACRO-Windows.zip"
 LOCAL_ZIP = os.path.join(APP_DIR, ".bootstrap_download.zip")
 VERSION_FILE = os.path.join(APP_DIR, ".bootstrap_version")
 
@@ -43,7 +43,7 @@ VERSION_FILE = os.path.join(APP_DIR, ".bootstrap_version")
 # updating"; this file used to name it literally, so the same rename would make
 # the bootstrapper extract everything correctly and then report
 # Keep the old asset name for compatibility with existing releases.
-_EXE_HINT = "ae-junsei-macro.exe"   # tried first; just a hint
+_EXE_HINT = "VFERDZ-AE-MACRO.exe"   # tried first; just a hint
 
 
 def find_local_exe() -> str:
@@ -84,7 +84,7 @@ MB_ERROR = 0x10
 
 def _msg(text: str, icon: int = MB_OK):
     try:
-        ctypes.windll.user32.MessageBoxW(0, text, "Junsei", icon)
+        ctypes.windll.user32.MessageBoxW(0, text, "VFERDZ MACRO", icon)
     except Exception:
         pass
 
@@ -204,7 +204,7 @@ def ensure_app() -> bool:
 def main():
     if not ensure_app():
         _msg(
-            "Couldn't download Junsei. Check your internet connection "
+            "Couldn't download VFERDZ-AE-MACRO. Check your internet connection "
             "and try again.",
             MB_ERROR,
         )

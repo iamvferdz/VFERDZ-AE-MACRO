@@ -2648,7 +2648,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                        if where else f"{result_word} — session match **#{sw + sl}**.")
 
         version = snap.get("version")
-        footer = "Junsei | Anime Expeditions" + (f" · v{version}" if version else "")
+        footer = "VFERDZ MACRO | Anime Expeditions" + (f" · v{version}" if version else "")
         main_embed = {
             "title": "Victory! \U0001F3C6" if is_win else "Defeat \U0001F480",
             "color": 0x3FBF6F if is_win else 0xE05A6D,
@@ -3239,7 +3239,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             "description": description,
             "color": color,
             "fields": fields,
-            "footer": {"text": "Junsei | Anime Expeditions"},
+            "footer": {"text": "VFERDZ MACRO | Anime Expeditions"},
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         mention_id = (webhook or {}).get("mention_id")
