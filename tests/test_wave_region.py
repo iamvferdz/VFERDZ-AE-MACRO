@@ -57,7 +57,7 @@ def test_the_shared_region_is_left_alone():
     """Story/Raid/Infinite have been reading their badge correctly from the
     shared box for a long time, and it has not been re-measured for them.
     This change is Expedition-only on purpose."""
-    assert WAVE_REGION == (467, 21, 104, 61)
+    assert WAVE_REGION == (467, 16, 130, 45)
     assert EXPEDITION_WAVE_REGION != WAVE_REGION
 
 
@@ -94,7 +94,7 @@ def test_wait_for_wave_reads_from_the_runners_configured_region(monkeypatch):
     runner._wave_region = EXPEDITION_WAVE_REGION
     captured = []
 
-    monkeypatch.setattr(runner_blocks.vision, "capture_window_region_bgr",
+    monkeypatch.setattr(runner_blocks.vision, "capture_game_bgr",
                         lambda _hwnd, region: captured.append(region) or None)
 
     runner._run_wait_wave_tick(123, {"params": {"wave": 4}}, 1)

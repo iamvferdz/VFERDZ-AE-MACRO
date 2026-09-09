@@ -116,8 +116,8 @@ def test_wait_for_wave_requires_two_target_readings_before_later_blocks(monkeypa
     )
     monkeypatch.setattr(
         runner_blocks.vision,
-        "capture_window_region_bgr",
-        lambda _hwnd, _region: np.zeros((61, 104, 3)),
+        "capture_game_bgr",
+        lambda _hwnd, _region: np.zeros((45, 130, 3)),
     )
     monkeypatch.setattr("core.wave.read_wave", lambda _image: next(readings))
 
@@ -142,8 +142,8 @@ def test_wait_for_wave_captures_the_roblox_window_not_the_screen(monkeypatch):
 
     monkeypatch.setattr(
         runner_blocks.vision,
-        "capture_window_region_bgr",
-        lambda hwnd, region: captured.append((hwnd, region)) or np.zeros((61, 104, 3)),
+        "capture_game_bgr",
+        lambda hwnd, region: captured.append((hwnd, region)) or np.zeros((45, 130, 3)),
     )
     monkeypatch.setattr(
         "core.ocr.capture_region",
@@ -171,8 +171,8 @@ def test_wait_for_wave_supports_current_only_unlimited_counter(monkeypatch):
     )
     monkeypatch.setattr(
         runner_blocks.vision,
-        "capture_window_region_bgr",
-        lambda _hwnd, _region: np.zeros((61, 104, 3)),
+        "capture_game_bgr",
+        lambda _hwnd, _region: np.zeros((45, 130, 3)),
     )
     monkeypatch.setattr("core.wave.read_wave", lambda _image: next(readings))
 
@@ -201,8 +201,8 @@ def test_wait_for_wave_rejects_inconsistent_impossible_unlimited_reads(monkeypat
     )
     monkeypatch.setattr(
         runner_blocks.vision,
-        "capture_window_region_bgr",
-        lambda _hwnd, _region: np.zeros((61, 104, 3)),
+        "capture_game_bgr",
+        lambda _hwnd, _region: np.zeros((45, 130, 3)),
     )
     monkeypatch.setattr("core.wave.read_wave", lambda _image: next(readings))
 

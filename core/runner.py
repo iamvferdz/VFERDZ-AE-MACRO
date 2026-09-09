@@ -1865,7 +1865,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         state["next_check"] = now + WAIT_WAVE_POLL_INTERVAL
 
         try:
-            image = vision.capture_window_region_bgr(hwnd, self._wave_region)
+            image = vision.capture_game_bgr(hwnd, self._wave_region)
             if image is None:
                 raise RuntimeError("window capture returned no image")
             current, maximum = wave_module.read_wave(image)
