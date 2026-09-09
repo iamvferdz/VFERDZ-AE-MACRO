@@ -1,4 +1,4 @@
-# Junsei — Project Study and Maintenance Notes
+# VFERDZ-AE-MACRO — Project Study and Maintenance Notes
 
 This repository is an open-source automation app for the Roblox game Anime Expeditions. It is not a memory-hacking or injection-based bot. Instead, it uses image matching, screen capture, mouse/keyboard input, and a docked game window to automate gameplay.
 

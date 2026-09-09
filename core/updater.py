@@ -43,7 +43,7 @@ import requests
 
 from . import constants
 
-GITHUB_REPO = "junssei/ae-macro"
+GITHUB_REPO = "iamvferdz/VFERDZ-AE-MACRO"
 RELEASES_LATEST_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
 RELEASES_PAGE_URL = f"https://github.com/{GITHUB_REPO}/releases/latest"
 # The packaged release zip (exe + the loose Assets/ folder side by side,
@@ -65,8 +65,8 @@ RELEASES_PAGE_URL = f"https://github.com/{GITHUB_REPO}/releases/latest"
 # platform's zip automatically. The Windows zip briefly shipped unsuffixed
 # (v0.3.0-v0.4.0 as published) -- renamed for symmetry once the mac zip
 # joined it.
-RELEASE_ZIP_NAME = ("ae-junsei-macro-macOS.zip" if sys.platform == "darwin"
-                     else "ae-junsei-macro-Windows.zip")
+RELEASE_ZIP_NAME = ("VFERDZ-AE-MACRO-macOS.zip" if sys.platform == "darwin"
+                     else "VFERDZ-AE-MACRO-Windows.zip")
 # BUNDLE_DIR, not APP_DIR -- VERSION ships as part of the app itself (it's
 # what identifies which release you're running), not user-owned data.
 VERSION_FILE = os.path.join(constants.BUNDLE_DIR, "VERSION")
@@ -869,7 +869,7 @@ def stage_exe_update(new_exe_path: str) -> str:
 setlocal enabledelayedexpansion
 set LOG="{log_path}"
 echo ---- %date% %time% ---- > %LOG%
-echo Updating Junsei -- please wait, this window closes itself...
+echo Updating VFERDZ-AE-MACRO -- please wait, this window closes itself...
 echo [1/5] Waiting for the app to close itself (image: {exe_name})... >> %LOG%
 rem taskkill is the SAFETY NET for a shutdown that hangs, not the way the app
 rem normally closes -- so wait for the app to go on its own FIRST and only
