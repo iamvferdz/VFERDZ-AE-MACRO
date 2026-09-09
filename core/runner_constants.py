@@ -305,6 +305,10 @@ STAGE_ROW_HEIGHT = 56
 # roughly 10%-larger panel where that X lands outside the row. Locate its
 # distinctive infinity glyph inside the left stage column instead.
 STORY_STAGE_VISUAL_IMAGES = {"Infinite": "stage_infinite"}
+STORY_EVENT_STAGE_IMAGES = {
+    "Eclipsed Infinite": "story_eclipsed_infinite_stage",
+    "Golden Hour": "story_golden_hour_stage",
+}
 STORY_STAGE_SEARCH_REGION = (140, 120, 200, 560)
 STORY_STAGE_MATCH_THRESHOLD = 0.82
 STORY_STAGE_CLICK_ATTEMPTS = 3
@@ -594,6 +598,20 @@ LOBBY_OVERLAY_CLOSE_IMAGE_NAMES = ("update_log_close",)
 # 10 visual variants on file, all inside Assets/ui/priority_upgrade/ --
 # every one tried per search, same folder-variant mechanism as above.
 PRIORITY_UPGRADE_IMAGE_NAMES = ("priority_upgrade",)
+
+# Eclipse Infinite reward-card identity crops. These are optional Image
+# Manager assets; when absent or unmatched, the normal fallback selects a
+# visible card so Eclipse runs do not stall.
+ECLIPSE_SOUL_CARD_IMAGES = {
+    "Redeemed Soul": "eclipse_redeemed_soul",
+    "Sacrificed Soul": "eclipse_sacrificed_soul",
+}
+# The three Eclipse Pick Card panels occupy this reference-client row. The
+# asset match is usually a small title/meter crop, so its own center is not a
+# safe click target; use the containing card center instead.
+ECLIPSE_CARD_SEARCH_REGION = (180, 250, 800, 280)
+ECLIPSE_CARD_CENTERS_X = (277, 576, 876)
+ECLIPSE_CARD_CENTER_Y = 392
 
 # Roblox deep link used to rejoin after a detected disconnect -- reopens
 # (or, if the client fully closed, relaunches) straight into this specific

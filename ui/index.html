@@ -849,6 +849,28 @@
             </div>
           </details>
 
+          <details id="resource-card-global-story" class="resource-card">
+            <summary class="resource-card-head">
+              <span class="resource-card-icon">GS</span>
+              <span class="resource-card-copy">
+                <span class="resource-card-title">Global Story Map Setup</span>
+                <span class="resource-card-desc">Macro Operations for random Story events and future Story updates.</span>
+              </span>
+              <span id="resource-global-story-summary" class="resource-card-state">Not configured</span>
+              <span class="resource-card-chevron">&#8250;</span>
+            </summary>
+            <div class="resource-card-body">
+              <div id="global-story-setup-warning" class="resource-setup-warning" style="display: none;"></div>
+              <div class="setting-row" style="padding: 10px 0;">
+                <div>
+                  <div class="setting-label">Story Map Setup</div>
+                  <div class="setting-desc">Assign the Macro Operation used by Eclipsed Infinite, Golden Hour, and future random Story events.</div>
+                </div>
+                <button class="task-toolbar-btn" onclick="openGlobalStoryMaps()">Story maps</button>
+              </div>
+            </div>
+          </details>
+
           <!-- Auto Bounty -->
           <details id="resource-card-bounty" class="resource-card">
             <summary class="resource-card-head">
@@ -2126,6 +2148,19 @@
       <div class="modal-body">
         <div class="wh-hint" style="margin-bottom: 8px;">Regular Challenge rotates one of the Story maps through each slot &mdash; assign the Macro Operation to run for each.</div>
         <div id="challenge-map-list" style="max-height: 60vh; overflow-y: auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="global-story-maps-modal" class="modal-overlay" style="display:none;" onmousedown="if(event.target===this) closeGlobalStoryMaps()">
+    <div class="modal-panel" style="width: 520px; max-width: 94vw;">
+      <div class="modal-head">
+        <span class="modal-title">Global Story Maps</span>
+        <span class="modal-close" onclick="closeGlobalStoryMaps()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="wh-hint" style="margin-bottom: 8px;">Assign the Macro Operation for random Story events such as Eclipsed Infinite and Golden Hour.</div>
+        <div id="global-story-map-list" style="max-height: 60vh; overflow-y: auto;"></div>
       </div>
     </div>
   </div>

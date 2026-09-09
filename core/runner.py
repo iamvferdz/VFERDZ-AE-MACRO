@@ -125,7 +125,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                  set_bounty_remaining=None, get_fuel_settings=None,
                  mark_fuel_refill_result=None, get_hotkeys=None,
                  get_auto_shop_settings=None,
-                 save_auto_shop_item_state=None, save_auto_shop_shop_state=None):
+                 save_auto_shop_item_state=None, save_auto_shop_shop_state=None,
+                 get_global_story_settings=None):
         self._mouse = mouse
         self._keyboard = keyboard
         self._log = log
@@ -200,6 +201,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # Challenge will resume after it finishes.
         self._active_task_progress = None
         self._current_task = None
+        self._active_task = None
         # (result: "win"|"loss", map_name, duration_str) -> persists to run
         # history / win-loss counters (see main.Api._record_match_result).
         self._record_result = record_result or (lambda *a, **kw: None)
@@ -209,6 +211,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # in tests/CLI mode) just makes _run_challenges a no-op.
         self._get_challenge_settings = get_challenge_settings
         self._get_bounty_settings = get_bounty_settings
+        self._get_global_story_settings = get_global_story_settings or (lambda: {})
         # Read when an Auto Upgrade Unit block runs so a key changed in
         # Settings is used without rebuilding the runner or embedding a
         # machine-specific key inside every exported macro template.
@@ -614,6 +617,42 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         for the ENTIRE search window. Middle-screen click picks whatever
         card is there. Returns whether one was actually found (so callers
         can loop until it's actually gone, not just fire once)."""
+        task = getattr(self, "_active_task", None) or getattr(self, "_current_task", None) or {}
+        preferred = (
+            task.get("eclipse_soul")
+            if task.get("mode") == "story" and task.get("story_event") == "Eclipsed Infinite"
+            else None
+        )
+        preferred_image = ECLIPSE_SOUL_CARD_IMAGES.get(preferred)
+        if preferred_image:
+            try:
+                preferred_match = vision.find_image(
+                    hwnd, preferred_image, region=ECLIPSE_CARD_SEARCH_REGION)
+            except vision.TemplateNotFound:
+                preferred_match = None
+                self._log(
+                    f'[Macro] Eclipse card asset "{preferred_image}" is not configured -- '
+                    "using the first available card."
+                )
+            if preferred_match is not None:
+                self._log(
+                    f'[Macro] Found preferred Eclipse card "{preferred}" '
+                    f'(score {preferred_match["score"]:.2f}) -- clicking it.'
+                )
+                self._last_reward_card_at = time.time()
+                self._last_board_disruption_at = self._last_reward_card_at
+                left, top, _, _ = wm.get_window_rect_screen(hwnd)
+                card_index = min(
+                    range(len(ECLIPSE_CARD_CENTERS_X)),
+                    key=lambda index: abs(preferred_match["cx"] - ECLIPSE_CARD_CENTERS_X[index]),
+                )
+                self._mouse.click(
+                    left + ECLIPSE_CARD_CENTERS_X[card_index],
+                    top + ECLIPSE_CARD_CENTER_Y,
+                )
+                return True
+            self._log(f'[Macro] Preferred Eclipse card "{preferred}" was not detected.')
+
         try:
             match = vision.find_image(hwnd, "select upgrade card")
         except vision.TemplateNotFound:
@@ -1618,7 +1657,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                     return False
                 if attempt > 1:
                     self._log(f"[Macro] Retrying from the lobby (attempt {attempt}/{MAP_SELECT_RETRY_ATTEMPTS})...")
-                if self._reach_map_selected(hwnd, stop_event, map_name, mode, scroll_power, scroll_nudges):
+                if self._reach_map_selected(hwnd, stop_event, map_name, mode, scroll_power, scroll_nudges,
+                                            task.get("story_event")):
                     reached_map = True
                     break
                 if stop_event.is_set():
@@ -1636,7 +1676,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 self._select_expedition_difficulty(hwnd, stop_event, task.get("difficulty") or "1")
             else:
                 stage = task.get("stage") or "1"
-                if not self._select_stage(hwnd, stop_event, stage, mode):
+                if not self._select_stage(hwnd, stop_event, stage, mode, task.get("story_event")):
                     return False
                 if self._checkpoint(stop_event):
                     return False
@@ -1646,7 +1686,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 # difficulty picker exists for it, so no click happens for it.
                 if mode == "raid":
                     self._log('[Macro] Raid is locked to Hard in-game -- no difficulty click needed.')
-                elif stage in SPECIAL_STAGES_NO_DIFFICULTY:
+                elif stage in SPECIAL_STAGES_NO_DIFFICULTY or (
+                        mode == "story" and task.get("story_event") not in (None, "", "Normal")):
                     self._log(f'[Macro] "{stage}" is locked to Hard in-game -- no difficulty click needed.')
                 else:
                     # _select_stage already settled (DIFFICULTY_CLICK_DELAY)
@@ -1668,6 +1709,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # straight to Enter Matchmaking instead, since this doesn't
         # reliably show up the same way for it.
         summer_portal = mode == "summer" and task.get("summer_mode") == "Portal Mode"
+        story_event = mode == "story" and task.get("story_event") not in (None, "", "Normal")
         if task.get("play_mode") != "matchmaking" and not summer_portal:
             if mode == "tournament":
                 confirm_image = "nav_entertournament"
@@ -1687,7 +1729,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # is exactly why it kept sitting there waiting on it and looking
         # like it was "going to matchmaking" regardless of this setting.
         if task.get("play_mode") == "matchmaking":
-            if not self._click_enter_matchmaking(hwnd, stop_event, coords, mode):
+            if not self._click_enter_matchmaking(hwnd, stop_event, coords, mode, story_event=story_event):
                 return False
             if self._checkpoint(stop_event):
                 return False
@@ -1712,6 +1754,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         Pre Start block so they only fire on the task's first entry into
         this stage, not on every repeat (see _run_prestart). Returns
         "win"/"loss", or None on failure/stop."""
+        self._active_task = task
         if not self._start_game_or_reset_via_settings(hwnd, stop_event, task.get("play_mode")):
             return None
         if self._checkpoint(stop_event):
@@ -2593,7 +2636,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # setting never actually applies there, so reporting it verbatim
         # was showing e.g. "Normal" for a run that was really Hard. Event has
         # no difficulty at all.
-        if mode == "raid" or raw_stage in SPECIAL_STAGES_NO_DIFFICULTY:
+        if (mode == "raid" or raw_stage in SPECIAL_STAGES_NO_DIFFICULTY
+                or (mode == "story" and task.get("story_event") not in (None, "", "Normal"))):
             difficulty = "Hard"
         elif mode in ("event", "tournament", "tower"):
             difficulty = "-"
@@ -3902,7 +3946,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         self._mouse.click(left + x, top + y)
 
 
-    def _click_enter_matchmaking(self, hwnd, stop_event: threading.Event, coords: dict, mode: str = None) -> bool:
+    def _click_enter_matchmaking(self, hwnd, stop_event: threading.Event, coords: dict,
+                                 mode: str = None, story_event: bool = False) -> bool:
         # Expedition's and Challenge's matchmaking buttons are each their
         # own image (exp_enter_matchmaking / chal_enter) at an uncalibrated
         # position -- no matchmaking_region_* exists for either, so they're
@@ -3912,7 +3957,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # button isn't at the calibrated Story/Raid position (matchmaking_
         # region_*) -- so it's searched full-window, same as Expedition/
         # Challenge, rather than boxed to a region it may not land in.
-        region = None if mode in ("expedition", "challenge", "event", "summer") else (
+        region = None if mode in ("expedition", "challenge", "event", "summer") or story_event else (
             coords["matchmaking_region_x"], coords["matchmaking_region_y"],
             coords["matchmaking_region_w"], coords["matchmaking_region_h"],
         )
@@ -3938,14 +3983,16 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         vision.click_match(self._mouse, hwnd, match)
         return True
 
-    def _select_stage(self, hwnd, stop_event: threading.Event, stage: str, mode: str) -> bool:
+    def _select_stage(self, hwnd, stop_event: threading.Event, stage: str, mode: str,
+                      story_event: str = "Normal") -> bool:
         # Raid's screen is the same nav_select_stage screen as Story's, just
         # with 3 Act rows spaced differently instead of the 7 stage rows
         # (see ACT_ORDER/ACT_CLICK_BASE/ACT_ROW_HEIGHT).
         order, base, row_height, label = (
             (ACT_ORDER, self._cxy("act_row"), int(self._coords["act_row_height"]), "Act") if mode == "raid"
             else (STAGE_ORDER, self._cxy("stage_row"), int(self._coords["stage_row_height"]), "stage"))
-        if stage not in order:
+        event_stage = mode == "story" and story_event not in (None, "", "Normal")
+        if stage not in order and not event_stage:
             self._log(f'[Macro] Unknown {label} "{stage}" -- expected one of {order}.')
             return False
 
@@ -3973,10 +4020,15 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # but a regular numbered stage started instead).
         time.sleep(SETTLE_DELAY)
 
-        visual_name = STORY_STAGE_VISUAL_IMAGES.get(stage) if mode == "story" else None
+        visual_name = (
+            STORY_EVENT_STAGE_IMAGES.get(story_event)
+            if event_stage
+            else STORY_STAGE_VISUAL_IMAGES.get(stage) if mode == "story" else None
+        )
         if visual_name:
             return self._select_story_stage_visually(
-                hwnd, stop_event, stage, visual_name)
+                hwnd, stop_event, story_event if event_stage else stage, visual_name,
+                verify_selection=not event_stage)
 
         idx = order.index(stage)
         x = base[0]
@@ -4029,7 +4081,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         return self._stage_row_looks_selected(image)
 
     def _select_story_stage_visually(
-            self, hwnd, stop_event: threading.Event, stage: str, image_name: str) -> bool:
+            self, hwnd, stop_event: threading.Event, stage: str, image_name: str,
+            verify_selection: bool = True) -> bool:
         """Find a named Story row visually and prove its selected state."""
         try:
             match = vision.wait_for_image(
@@ -4053,7 +4106,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             f'[Macro] Found stage "{stage}" visually (score {match["score"]:.2f}) '
             f'at ({match["cx"]}, {match["cy"]}).'
         )
-        if self._story_stage_match_is_selected(hwnd, match):
+        if verify_selection and self._story_stage_match_is_selected(hwnd, match):
             self._log(f'[Macro] Stage "{stage}" is already selected.')
             time.sleep(DIFFICULTY_CLICK_DELAY)
             return True
@@ -4074,6 +4127,13 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 f'(attempt {attempt}/{STORY_STAGE_CLICK_ATTEMPTS}).'
             )
             self._mouse.double_click(left + match["cx"], top + match["cy"])
+
+            if not verify_selection:
+                # Event rows use a different selected-state treatment from the
+                # standard blue Story rows. The shared Select Stage button is
+                # the authoritative confirmation for these special stages.
+                time.sleep(DIFFICULTY_CLICK_DELAY)
+                return True
 
             deadline = time.time() + STORY_STAGE_SELECTED_VERIFY_TIMEOUT
             while time.time() < deadline:
@@ -4183,7 +4243,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         return True
 
     def _reach_map_selected(self, hwnd, stop_event: threading.Event, map_name: str, mode: str,
-                              scroll_power: int, scroll_nudges: int) -> bool:
+                              scroll_power: int, scroll_nudges: int, story_event: str = "Normal") -> bool:
         """Lobby -> Play -> Story/Raid -> map search, as one restartable unit --
         called in a loop by _run (see MAP_SELECT_RETRY_ATTEMPTS). Each call
         re-checks from scratch (including the "already on the gamemode
@@ -4238,7 +4298,23 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             kwargs["scroll_power"] = scroll_power
         if scroll_nudges is not None:
             kwargs["scroll_nudges"] = scroll_nudges
-        if stage_select.find_and_click_map(self._mouse, hwnd, map_name, log_and_status, stop_event, **kwargs):
+        select_map = (
+            stage_select.find_and_click_story_event
+            if mode == "story" and story_event and story_event != "Normal"
+            else stage_select.find_and_click_map
+        )
+        target = story_event if select_map is stage_select.find_and_click_story_event else map_name
+        selected = select_map(self._mouse, hwnd, target, log_and_status, stop_event, **kwargs)
+        if selected:
+            if mode == "story" and story_event and story_event != "Normal" and isinstance(selected, str):
+                self._current_task["map"] = selected
+                global_settings = self._get_global_story_settings() or {}
+                macro = ((global_settings.get("maps") or {}).get(selected) or {}).get("macro") or ""
+                if macro:
+                    self._current_task["macro"] = macro
+                    self._log(f'[Macro] Using Global Story Map Setup macro "{macro}" for "{selected}".')
+                else:
+                    self._log(f'[Macro] No Global Story Map Setup macro is assigned for "{selected}".')
             return True
 
         self._spam_back_until_gone(hwnd, stop_event)
