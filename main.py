@@ -557,7 +557,7 @@ class Api:
             self.set_bounty_remaining, self.get_fuel_settings, self.mark_fuel_refill_result,
             self.get_hotkeys,
             self.get_auto_shop_settings, self._save_auto_shop_item_state,
-            self._save_auto_shop_shop_state)
+            self._save_auto_shop_shop_state, self.get_global_story_settings)
 
     def _run_stats_snapshot(self) -> dict:
         # Fed to the runner's match-result webhook so it can report the same
@@ -1261,6 +1261,24 @@ class Api:
     @staticmethod
     def _challenge_macro_setup(settings: dict) -> dict:
         return Api._story_macro_setup(settings, CHALLENGE_STORY_MAPS)
+
+    def get_global_story_settings(self) -> dict:
+        saved = cfg.load().get("global_story") or {}
+        maps = {
+            name: {"macro": ((saved.get("maps") or {}).get(name) or {}).get("macro") or ""}
+            for name in CHALLENGE_STORY_MAPS
+        }
+        result = {"maps": maps}
+        result.update(self._story_macro_setup(result, CHALLENGE_STORY_MAPS))
+        return result
+
+    def set_global_story_map_macro(self, map_name: str, macro: str) -> dict:
+        if map_name not in CHALLENGE_STORY_MAPS:
+            return {"ok": False, "reason": "bad_map"}
+        settings = self.get_global_story_settings()
+        settings["maps"][map_name]["macro"] = macro or ""
+        cfg.update({"global_story": {"maps": settings["maps"]}})
+        return {"ok": True, **self._story_macro_setup(settings, CHALLENGE_STORY_MAPS)}
 
     @staticmethod
     def _bounty_macro_setup(settings: dict) -> dict:

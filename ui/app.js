@@ -2150,6 +2150,7 @@ const TASK_DATA = {
     label: 'Story',
     maps: ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'],
     stages: ['1', '2', '3', '4', '5', 'Infinite', 'Mastery'],
+    events: ['Normal', 'Eclipsed Infinite', 'Golden Hour'],
     difficulties: ['Normal', 'Hard'],
   },
   raid: {
@@ -2215,7 +2216,8 @@ function newTaskId() {
 function defaultTask() {
   return {
     id: newTaskId(), mode: 'story',
-    map: TASK_DATA.story.maps[0], stage: '1', difficulty: 'Normal',
+    map: TASK_DATA.story.maps[0], stage: '1', story_event: 'Normal', difficulty: 'Normal',
+    eclipse_soul: 'Redeemed Soul',
     summer_mode: 'Event Mode',
     infinite_wave_limit: DEFAULT_INFINITE_WAVE_LIMIT,
     extract_after: '1',
@@ -2705,7 +2707,7 @@ function setTaskProp(id, key, value) {
   // labels re-render on every change either way, but the Builder is only
   // rebuilt when the *shape* changed so typing in the Repeat field doesn't
   // lose focus mid-keystroke to an innerHTML swap.
-  const structural = ['mode', 'stage', 'summer_mode', 'map'];
+  const structural = ['mode', 'stage', 'story_event', 'summer_mode', 'map'];
   if (key === 'mode') {
     const d = TASK_DATA[t.mode];
     if (d.maps) t.map = d.maps[0];
@@ -2735,6 +2737,14 @@ function setTaskProp(id, key, value) {
     t.stage = '1';
     t.portal_tier = '1';
   }
+  if (key === 'story_event' && t.mode === 'story') {
+    t.stage = value === 'Eclipsed Infinite' ? 'Infinite'
+      : value === 'Golden Hour' ? 'Golden Hour' : '1';
+    t.difficulty = value === 'Normal' ? 'Normal' : 'Hard';
+    if (value !== 'Eclipsed Infinite') t.eclipse_soul = '';
+    else if (!['Redeemed Soul', 'Sacrificed Soul'].includes(t.eclipse_soul)) t.eclipse_soul = 'Redeemed Soul';
+    if (value !== 'Normal') t.macro = '';
+  }
   if (key === 'map' && t.mode === 'summer' && t.summer_mode === 'Portal Mode') {
     t.portal_tier = '1';
   }
@@ -2759,7 +2769,11 @@ function taskSummary(t) {
   const d = TASK_DATA[t.mode];
   let title = d.label;
   if (t.mode === 'story' || t.mode === 'raid') {
-    title += ` · ${t.map} · ${/^\d+$/.test(t.stage) ? 'Stage ' + t.stage : t.stage}`;
+    if (t.mode === 'story' && t.story_event && t.story_event !== 'Normal') {
+      title += ` · ${t.story_event}`;
+    } else {
+      title += ` · ${t.map} · ${/^\d+$/.test(t.stage) ? 'Stage ' + t.stage : t.stage}`;
+    }
   } else if (t.mode === 'expedition' || t.mode === 'tournament') {
     title += ` · ${t.map}`;
   } else if (t.mode === 'summer') {
@@ -2858,9 +2872,28 @@ function renderTaskBuilder() {
   ];
 
   if (t.mode === 'story' || t.mode === 'raid') {
-    fields.push(field('Map', sel('map', d.maps, null, 'Select map')));
-    const stageTooltip = t.mode === 'raid' ? 'Select Raid Act 1, Act 2, or Act 3' : 'Select Stage 1-5, Infinite, or Mastery';
-    fields.push(field('Stage', sel('stage', d.stages, s => /^\d+$/.test(s) ? 'Stage ' + s : s, stageTooltip), stageTooltip));
+    if (t.mode === 'story') {
+      fields.push(field('Story Event', sel('story_event', d.events, null,
+        'Normal Story, Eclipsed Infinite, or Golden Hour')));
+    }
+    if (t.mode === 'story' && t.story_event !== 'Normal') {
+      fields.push(field('Map', '<span class="task-chip" style="align-self: flex-start;">Automatic · event location</span>',
+        'The macro scans every Story map until it finds the selected Story Event'));
+    } else {
+      fields.push(field('Map', sel('map', d.maps, null, 'Select map')));
+    }
+    const stageTooltip = t.mode === 'raid' ? 'Select Raid Act 1, Act 2, or Act 3'
+      : 'Select Stage 1-5, Infinite, or Mastery';
+    if (t.mode === 'story' && t.story_event !== 'Normal') {
+      fields.push(field('Stage', `<span class="task-chip" style="align-self: flex-start;">Automatic · locked</span>`,
+        'The macro selects the event stage using its Image Manager template'));
+    } else {
+      fields.push(field('Stage', sel('stage', d.stages, s => /^\d+$/.test(s) ? 'Stage ' + s : s, stageTooltip), stageTooltip));
+    }
+    if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite') {
+      fields.push(field('Eclipse Soul', sel('eclipse_soul', ['Redeemed Soul', 'Sacrificed Soul'], null,
+        'Select the preferred Eclipse reward-card type; if unavailable, the first visible card is selected')));
+    }
   } else if (t.mode === 'expedition') {
     fields.push(field('Expedition', sel('map', d.maps, null, 'Select Expedition map')));
   } else if (t.mode === 'summer') {
@@ -2885,9 +2918,10 @@ function renderTaskBuilder() {
   }
 
   const specialStage = t.mode === 'story' && (t.stage === 'Infinite' || t.stage === 'Mastery');
-  if ((t.mode === 'story' && !specialStage) || t.mode === 'expedition') {
+  const storyEventLocked = t.mode === 'story' && t.story_event && t.story_event !== 'Normal';
+  if ((t.mode === 'story' && !specialStage && !storyEventLocked) || t.mode === 'expedition') {
     fields.push(field('Difficulty', sel('difficulty', d.difficulties, null, 'Select difficulty level')));
-  } else if (d.fixedDifficulty || specialStage) {
+  } else if (d.fixedDifficulty || specialStage || storyEventLocked) {
     fields.push(field('Difficulty', `<span class="task-chip" style="align-self: flex-start;">Hard &middot; locked</span>`, 'Difficulty locked to Hard for this mode'));
   }
 
@@ -2917,12 +2951,14 @@ function renderTaskBuilder() {
 
   // Team Loadout rides with the chosen template (see the Macro Manager tab), so the
   // macro picker is the only loadout-related control left on a task.
-  const macroSel = `
-    <select class="task-select" onchange="setTaskProp('${t.id}', 'macro', this.value)" data-tooltip="Select a pre-start placement macro template">
-      <option value="">No Macro</option>
-      ${taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === t.macro ? 'selected' : ''}>&#9654; ${escapeHtml(n)}</option>`).join('')}
-    </select>`;
-  fields.push(field('Macro Operation', macroSel, 'Select a pre-start placement macro template'));
+  if (!(t.mode === 'story' && t.story_event && t.story_event !== 'Normal')) {
+    const macroSel = `
+      <select class="task-select" onchange="setTaskProp('${t.id}', 'macro', this.value)" data-tooltip="Select a pre-start placement macro template">
+        <option value="">No Macro</option>
+        ${taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === t.macro ? 'selected' : ''}>&#9654; ${escapeHtml(n)}</option>`).join('')}
+      </select>`;
+    fields.push(field('Macro Operation', macroSel, 'Select a pre-start placement macro template'));
+  }
 
 
   const extractHint = t.mode === 'expedition'
@@ -2967,6 +3003,14 @@ async function refreshTaskQueue() {
       }
       t.extract_after = normalizedExtractAfter;
       t.stage = String(t.stage);
+      if (!TASK_DATA[t.mode].events) t.story_event = 'Normal';
+      if (!TASK_DATA.story.events.includes(t.story_event)) t.story_event = 'Normal';
+      if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite') t.stage = 'Infinite';
+      if (t.mode === 'story' && t.story_event === 'Golden Hour') t.stage = 'Golden Hour';
+      if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite'
+          && !['Redeemed Soul', 'Sacrificed Soul'].includes(t.eclipse_soul)) t.eclipse_soul = 'Redeemed Soul';
+      if (t.story_event !== 'Eclipsed Infinite') t.eclipse_soul = '';
+      if (t.mode === 'story' && t.story_event !== 'Normal') t.macro = '';
       if (t.difficulty === 'Infinite' || t.difficulty === 'Mastery') {
         t.stage = t.difficulty;
         t.difficulty = 'Normal';
@@ -3082,6 +3126,7 @@ const CHALLENGE_STAGE_SLOTS = ['1', '2', '3'];
 // Operation at all; tests/test_challenge_maps.py fails when it drifts.
 const CHALLENGE_STORY_MAPS = ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'];
 let challengeState = null;
+let globalStoryState = null;
 
 function renderStoryMapSetupWarning(id, state, featureName) {
   const warning = document.getElementById(id);
@@ -3111,6 +3156,51 @@ async function refreshChallengeScreen() {
   }
   await refreshTaskTemplates();  // shares the same Macro Operation list Task Builder uses
   renderChallengeScreen();
+  refreshGlobalStorySetup();
+}
+
+async function refreshGlobalStorySetup() {
+  try { globalStoryState = await pywebview.api.get_global_story_settings(); }
+  catch (e) { globalStoryState = null; }
+  await refreshTaskTemplates();
+  const state = globalStoryState;
+  const warning = document.getElementById('global-story-setup-warning');
+  const summary = document.getElementById('resource-global-story-summary');
+  if (warning) {
+    const missing = (state && state.missing_maps) || [];
+    warning.innerHTML = missing.length
+      ? `<strong>Setup required:</strong> Assign a Macro Operation for ${missing.map(escapeHtml).join(', ')}.`
+      : '';
+    warning.style.display = missing.length ? '' : 'none';
+  }
+  if (summary) {
+    summary.textContent = state && state.setup_ready ? 'Ready' : 'Not configured';
+    summary.classList.toggle('active', !!(state && state.setup_ready));
+  }
+  renderGlobalStoryMaps();
+}
+
+function renderGlobalStoryMaps() {
+  const list = document.getElementById('global-story-map-list');
+  if (!list) return;
+  const state = globalStoryState;
+  if (!state) { list.innerHTML = '<div class="rh-empty">Couldn\'t load Global Story settings.</div>'; return; }
+  const opts = current => '<option value="">No Macro</option>' +
+    taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === current ? 'selected' : ''}>&#9654; ${escapeHtml(n)}</option>`).join('');
+  list.innerHTML = CHALLENGE_STORY_MAPS.map(map => `
+    <div class="task-card" style="--tqc: var(--teal); cursor: default;">
+      <div class="tq-text" style="min-width: 0;">
+        <div class="tq-title">${escapeHtml(map)}</div>
+        <div class="challenge-map-row"><select class="task-select" style="width: 100%;"
+          onchange="setGlobalStoryMapMacro('${escJs(map)}', this.value)">
+          ${opts((state.maps[map] || {}).macro)}</select></div>
+      </div>
+    </div>`).join('');
+}
+
+async function setGlobalStoryMapMacro(map, value) {
+  try { await pywebview.api.set_global_story_map_macro(map, value); } catch (e) {}
+  await refreshGlobalStorySetup();
 }
 
 function renderChallengeScreen() {
@@ -4024,6 +4114,17 @@ function openChallengeMaps() {
   const m = document.getElementById('challenge-maps-modal');
   if (m) m.style.display = 'flex';
   refreshChallengeScreen();  // (re)populate the per-map Macro Operation dropdowns
+}
+
+function openGlobalStoryMaps() {
+  const m = document.getElementById('global-story-maps-modal');
+  if (m) m.style.display = 'flex';
+  refreshGlobalStorySetup();
+}
+
+function closeGlobalStoryMaps() {
+  const m = document.getElementById('global-story-maps-modal');
+  if (m) m.style.display = 'none';
 }
 
 function closeChallengeMaps() {
