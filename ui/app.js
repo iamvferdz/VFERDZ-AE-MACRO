@@ -4612,6 +4612,9 @@ const MACRO_COORD_KEYS = [
   'team_button_x', 'team_button_y',
   'screen_middle_x', 'screen_middle_y',
   'portal_card_x', 'portal_card_y',
+  'eclipse_redeemed_card_x', 'eclipse_redeemed_card_y',
+  'eclipse_sacrificed_card_x', 'eclipse_sacrificed_card_y',
+  'eclipse_neutral_card_x', 'eclipse_neutral_card_y',
   'unit_info_reset_x', 'unit_info_reset_y',
 ];
 

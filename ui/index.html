@@ -1776,6 +1776,37 @@
            </div>
           </div>
 
+          <div class="setting-row" style="display: block; padding: 14px;">
+            <div class="setting-label">Eclipse Infinite</div>
+            <div class="setting-desc" style="margin-bottom: 12px;">Configure the three Eclipse Infinite card positions. The Pick Card header must be visible when using Pick.</div>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+              <div style="min-width: 0;">
+                <div class="setting-label">Left Card · Redeemed Soul</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-eclipse_redeemed_card_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_redeemed_card_x', this.value)">
+                  <input id="coord-eclipse_redeemed_card_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_redeemed_card_y', this.value)">
+                  <button onclick="openCoordPicker('eclipse_redeemed_card')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the left Redeemed Soul card">Pick</button>
+                </div>
+              </div>
+              <div style="min-width: 0;">
+                <div class="setting-label">Middle Card · Sacrificed Soul</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-eclipse_sacrificed_card_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_sacrificed_card_x', this.value)">
+                  <input id="coord-eclipse_sacrificed_card_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_sacrificed_card_y', this.value)">
+                  <button onclick="openCoordPicker('eclipse_sacrificed_card')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the middle Sacrificed Soul card">Pick</button>
+                </div>
+              </div>
+              <div style="min-width: 0;">
+                <div class="setting-label">Right Card · Neutral</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-eclipse_neutral_card_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_neutral_card_x', this.value)">
+                  <input id="coord-eclipse_neutral_card_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_neutral_card_y', this.value)">
+                  <button onclick="openCoordPicker('eclipse_neutral_card')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the right neutral card">Pick</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="setting-row" style="padding: 14px;">
             <div>
               <div class="setting-label">Story Card</div>
