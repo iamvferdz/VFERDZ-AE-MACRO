@@ -2169,12 +2169,13 @@ const TASK_DATA = {
     // run. See core.runner._expedition_extract_accept_at.
     extractAfter: ['0', '1', '2', '3', '4', '5'],
   },
-  summer: {
-    label: 'Summer',
-    modes: ['Event Mode', 'Portal Mode'],
+  event: {
+    label: 'Event',
+    eventNames: ['Summer Event - Tidal Siege'],
+    eventGamemodes: ['Event Mode', 'Portal Mode'],
     portals: ['Summer Portal', 'Sky Ruins Portal'],
     portalTiers: ['1', '2', '3', '4', '5', 'Secret'],
-    isSummer: true,
+    isEvent: true,
   },
   tournament: {
     label: 'Tournament',
@@ -2219,6 +2220,8 @@ function defaultTask() {
     map: TASK_DATA.story.maps[0], stage: '1', story_event: 'Normal', difficulty: 'Normal',
     eclipse_soul: 'Redeemed Soul',
     summer_mode: 'Event Mode',
+    event_name: 'Summer Event - Tidal Siege',
+    event_gamemode: 'Event Mode',
     infinite_wave_limit: DEFAULT_INFINITE_WAVE_LIMIT,
     extract_after: '1',
     repeat: 1, team: '', equipment: 'include', play_mode: 'solo', macro: '',
@@ -2707,7 +2710,7 @@ function setTaskProp(id, key, value) {
   // labels re-render on every change either way, but the Builder is only
   // rebuilt when the *shape* changed so typing in the Repeat field doesn't
   // lose focus mid-keystroke to an innerHTML swap.
-  const structural = ['mode', 'stage', 'story_event', 'summer_mode', 'map'];
+  const structural = ['mode', 'stage', 'story_event', 'summer_mode', 'event_name', 'event_gamemode', 'map'];
   if (key === 'mode') {
     const d = TASK_DATA[t.mode];
     if (d.maps) t.map = d.maps[0];
@@ -2715,6 +2718,12 @@ function setTaskProp(id, key, value) {
     else if (d.isSummer) {
       t.summer_mode = d.modes[0];
       t.map = d.isSummer && d.modes[0] === 'Portal Mode' ? d.portals[0] : 'Summer';
+      t.portal_tier = '1';
+    }
+    else if (d.isEvent) {
+      t.event_name = d.eventNames[0];
+      t.event_gamemode = d.eventGamemodes[0];
+      t.map = 'Summer';
       t.portal_tier = '1';
     }
     if (d.stages) t.stage = d.stages[0];
@@ -2735,6 +2744,15 @@ function setTaskProp(id, key, value) {
   if (key === 'summer_mode') {
     t.map = value === 'Portal Mode' ? TASK_DATA.summer.portals[0] : 'Summer';
     t.stage = '1';
+    t.portal_tier = '1';
+  }
+  if (key === 'event_name' && t.mode === 'event') {
+    t.event_gamemode = TASK_DATA.event.eventGamemodes[0];
+    t.map = 'Summer';
+    t.portal_tier = '1';
+  }
+  if (key === 'event_gamemode' && t.mode === 'event') {
+    t.map = value === 'Portal Mode' ? TASK_DATA.event.portals[0] : 'Summer';
     t.portal_tier = '1';
   }
   if (key === 'story_event' && t.mode === 'story') {
@@ -2776,9 +2794,10 @@ function taskSummary(t) {
     }
   } else if (t.mode === 'expedition' || t.mode === 'tournament') {
     title += ` · ${t.map}`;
-  } else if (t.mode === 'summer') {
-    const summerMode = t.summer_mode || 'Event Mode';
-    title += ` · ${summerMode}`;
+  } else if (t.mode === 'summer' || t.mode === 'event') {
+    const eventMode = t.mode === 'event';
+    const summerMode = eventMode ? (t.event_gamemode || 'Event Mode') : (t.summer_mode || 'Event Mode');
+    title += ` · ${eventMode ? (t.event_name || 'Summer Event - Tidal Siege') : summerMode}`;
     if (summerMode === 'Portal Mode') {
       const portal = t.map || '-';
       const tier = String(t.portal_tier || '1');
@@ -2896,9 +2915,17 @@ function renderTaskBuilder() {
     }
   } else if (t.mode === 'expedition') {
     fields.push(field('Expedition', sel('map', d.maps, null, 'Select Expedition map')));
-  } else if (t.mode === 'summer') {
-    fields.push(field('Mode', sel('summer_mode', d.modes, null, 'Select Summer mode')));
-    if ((t.summer_mode || d.modes[0]) === 'Portal Mode') {
+  } else if (t.mode === 'summer' || t.mode === 'event') {
+    const eventMode = t.mode === 'event';
+    const gamemodeKey = eventMode ? 'event_gamemode' : 'summer_mode';
+    const gamemodes = eventMode ? d.eventGamemodes : d.modes;
+    const gamemode = eventMode ? (t.event_gamemode || gamemodes[0]) : (t.summer_mode || gamemodes[0]);
+    if (eventMode) {
+      fields.push(field('Event Name', sel('event_name', d.eventNames, null, 'Select the event')));
+    }
+    fields.push(field(eventMode ? 'Event Gamemode' : 'Event Gamemode',
+      sel(gamemodeKey, gamemodes, null, 'Select Event Mode or Portal Mode')));
+    if (gamemode === 'Portal Mode') {
       fields.push(field('Portal', sel('map', d.portals, null, 'Select portal')));
       fields.push(field('Tier', sel('portal_tier', d.portalTiers, tier => tier === 'Secret'
         ? (t.map === 'Summer Portal' ? "Sovereign's Portal" : "Lightning God's Portal")
@@ -2925,7 +2952,8 @@ function renderTaskBuilder() {
     fields.push(field('Difficulty', `<span class="task-chip" style="align-self: flex-start;">Hard &middot; locked</span>`, 'Difficulty locked to Hard for this mode'));
   }
 
-  if (t.mode === 'story' && t.stage === 'Infinite') {
+  if ((t.mode === 'story' && t.stage === 'Infinite')
+      || (t.mode === 'event' && t.event_gamemode === 'Event Mode')) {
     fields.push(field('Stop After Wave', `<input type="number" class="block-input" min="1"
       value="${Math.max(1, parseInt(t.infinite_wave_limit, 10) || DEFAULT_INFINITE_WAVE_LIMIT)}"
       oninput="setTaskProp('${t.id}', 'infinite_wave_limit', Math.max(1, parseInt(this.value, 10) || 1))">`,
@@ -2963,7 +2991,8 @@ function renderTaskBuilder() {
 
   const extractHint = t.mode === 'expedition'
     ? `<div class="wh-hint">"Extract After" is how many extract prompts to skip before actually taking one -- 0 extracts at the first node, higher goes deeper (and takes longer) per run.</div>` : '';
-  const infiniteHint = (t.mode === 'story' && t.stage === 'Infinite')
+  const infiniteHint = ((t.mode === 'story' && t.stage === 'Infinite')
+      || (t.mode === 'event' && t.event_gamemode === 'Event Mode'))
     ? `<div class="wh-hint"><b>Stop After Wave</b> completes the wave you enter, waits for the counter to advance once, then uses Leave Stage and returns to the lobby. For example, 20 leaves when wave 21 begins.</div>` : '';
   el.innerHTML = `
     <div class="task-builder-grid">${fields.join('')}</div>
@@ -2992,9 +3021,20 @@ async function refreshTaskQueue() {
     // unknown mode makes taskSummary() read TASK_DATA[mode].label off
     // undefined and throw, which aborts renderTaskList() mid-map and leaves
     // the whole list blank while the header still shows a count.
-    const dropped = rawTasks.filter(t => !TASK_DATA[t.mode]).length;
+    let migratedSummerTasks = 0;
+    const normalizedTasks = rawTasks.map(saved => {
+      if (saved.mode !== 'summer') return saved;
+      migratedSummerTasks++;
+      return {
+        ...saved,
+        mode: 'event',
+        event_name: 'Summer Event - Tidal Siege',
+        event_gamemode: saved.summer_mode || 'Event Mode',
+      };
+    });
+    const dropped = normalizedTasks.filter(t => !TASK_DATA[t.mode]).length;
     let repairedExtractAfter = 0;
-    taskCards = rawTasks.filter(t => TASK_DATA[t.mode]).map(saved => {
+    taskCards = normalizedTasks.filter(t => TASK_DATA[t.mode]).map(saved => {
       const t = { ...defaultTask(), ...saved };
       if (t.team == null) t.team = '';
       const normalizedExtractAfter = normalizeExtractAfter(t.extract_after);
@@ -3017,7 +3057,10 @@ async function refreshTaskQueue() {
       }
       return t;
     });
-    if (dropped || repairedExtractAfter) {
+    if (dropped || repairedExtractAfter || migratedSummerTasks) {
+      if (migratedSummerTasks) {
+        addLog(`[Task] Migrated ${migratedSummerTasks} Summer task(s) to Event.`);
+      }
       if (dropped) {
         addLog(`[Task] Removed ${dropped} task(s) with an unrecognized mode (e.g. old Challenge/Bounty entries).`);
       }

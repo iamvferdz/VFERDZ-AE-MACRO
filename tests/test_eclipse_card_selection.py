@@ -12,9 +12,10 @@ def _runner(task):
 
 
 def test_eclipse_prefers_configured_redeemed_soul_card(monkeypatch):
-    preferred = {"score": 0.88, "cx": 500, "cy": 300}
+    preferred = {"score": 0.88, "cx": 420, "cy": 300}
+    click_match = MagicMock()
+    monkeypatch.setattr(runner_module.vision, "click_match", click_match)
     monkeypatch.setattr(runner_module.vision, "find_image", lambda *_args, **_kwargs: preferred)
-    monkeypatch.setattr(runner_module.wm, "get_window_rect_screen", lambda _hwnd: (0, 0, 1152, 756))
 
     runner = _runner({
         "mode": "story",
@@ -22,7 +23,7 @@ def test_eclipse_prefers_configured_redeemed_soul_card(monkeypatch):
         "eclipse_soul": "Redeemed Soul",
     })
     assert runner._dismiss_reward_card_if_found(123)
-    runner._mouse.click.assert_called_once_with(576, 392)
+    click_match.assert_called_once_with(runner._mouse, 123, preferred)
 
 
 def test_eclipse_falls_back_when_preferred_card_is_not_found(monkeypatch):

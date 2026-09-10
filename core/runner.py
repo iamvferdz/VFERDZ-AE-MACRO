@@ -641,15 +641,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 )
                 self._last_reward_card_at = time.time()
                 self._last_board_disruption_at = self._last_reward_card_at
-                left, top, _, _ = wm.get_window_rect_screen(hwnd)
-                card_index = min(
-                    range(len(ECLIPSE_CARD_CENTERS_X)),
-                    key=lambda index: abs(preferred_match["cx"] - ECLIPSE_CARD_CENTERS_X[index]),
-                )
-                self._mouse.click(
-                    left + ECLIPSE_CARD_CENTERS_X[card_index],
-                    top + ECLIPSE_CARD_CENTER_Y,
-                )
+                vision.click_match(self._mouse, hwnd, preferred_match)
                 return True
             self._log(f'[Macro] Preferred Eclipse card "{preferred}" was not detected.')
 
@@ -1041,6 +1033,15 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         """
         map_name = task.get("map")
         mode = task.get("mode") or "story"
+        # The Task Builder exposes the future-proof Event schema, while the
+        # existing Summer runner already owns the navigation and portal
+        # handling. Normalize the current Event implementation at the runner
+        # boundary so all existing Summer retry/result paths remain shared.
+        if mode == "event":
+            task = dict(task)
+            task["mode"] = "summer"
+            task["summer_mode"] = task.get("event_gamemode") or "Event Mode"
+            mode = "summer"
         repeat_total = max(1, int(task.get("repeat") or 1))
         progress_task = dict(task)
         progress_task["map"] = map_name or mode.title()
@@ -1070,7 +1071,10 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         )
 
         resume_repeat = 1
-        portal_task = mode == "summer" and task.get("summer_mode") == "Portal Mode"
+        portal_task = (
+            (mode == "summer" and task.get("summer_mode") == "Portal Mode")
+            or (mode == "event" and task.get("event_gamemode") == "Portal Mode")
+        )
         recovery_attempt = 0
         while recovery_attempt < TASK_RECOVERY_ATTEMPTS or portal_task:
             recovery_attempt += 1
@@ -1573,7 +1577,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         once per repeat -- see the repeat loop in _run. Event mode takes its
         own lobby entry (nav_event -> event_gamemode -> Act) with no map or
         difficulty, then rejoins the shared confirm/Solo/Matchmaking tail."""
-        if mode == "summer":
+        if mode in ("summer", "event"):
             reached_summer = False
             for attempt in range(1, MAP_SELECT_RETRY_ATTEMPTS + 1):
                 if self._checkpoint(stop_event):
@@ -1874,7 +1878,14 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
     def _infinite_wave_limit(task: dict):
         """Configured completed-wave target for a Story > Infinite task."""
         task = task or {}
-        if task.get("mode") != "story" or task.get("stage") != "Infinite":
+        is_event_wave = (
+            task.get("mode") == "summer"
+            and task.get("summer_mode") == "Event Mode"
+        )
+        if not (
+            (task.get("mode") == "story" and task.get("stage") == "Infinite")
+            or is_event_wave
+        ):
             return None
         try:
             return max(1, int(task.get("infinite_wave_limit") or DEFAULT_INFINITE_WAVE_LIMIT))
@@ -4323,7 +4334,10 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
     def _reach_summer_selection(self, hwnd, stop_event: threading.Event, task: dict,
                                 scroll_power: int = None, scroll_nudges: int = None) -> bool:
         """Lobby -> Events -> Tidal Siege -> Event Gamemode -> selection."""
-        summer_mode = task.get("summer_mode") or "Event Mode"
+        summer_mode = (
+            task.get("event_gamemode") if task.get("mode") == "event"
+            else task.get("summer_mode")
+        ) or "Event Mode"
         if summer_mode not in SUMMER_MODE_IMAGES:
             self._log(f'[Macro] Unknown Summer mode "{summer_mode}".')
             return False
