@@ -606,12 +606,9 @@ ECLIPSE_SOUL_CARD_IMAGES = {
     "Redeemed Soul": "eclipse_redeemed_soul",
     "Sacrificed Soul": "eclipse_sacrificed_soul",
 }
-# The three Eclipse Pick Card panels occupy this reference-client row. The
-# asset match is usually a small title/meter crop, so its own center is not a
-# safe click target; use the containing card center instead.
+# The three Eclipse Pick Card panels occupy this reference-client row. Full
+# card templates are expected, so their match center is the click target.
 ECLIPSE_CARD_SEARCH_REGION = (180, 250, 800, 280)
-ECLIPSE_CARD_CENTERS_X = (277, 576, 876)
-ECLIPSE_CARD_CENTER_Y = 392
 
 # Roblox deep link used to rejoin after a detected disconnect -- reopens
 # (or, if the client fully closed, relaunches) straight into this specific
