@@ -195,6 +195,9 @@ MACRO_COORD_DEFAULTS = {
     # reliably.
     "team_button_x": None, "team_button_y": None,
     "screen_middle_x": 576, "screen_middle_y": 378,
+    "eclipse_redeemed_card_x": 277, "eclipse_redeemed_card_y": 392,
+    "eclipse_sacrificed_card_x": 576, "eclipse_sacrificed_card_y": 392,
+    "eclipse_neutral_card_x": 876, "eclipse_neutral_card_y": 392,
     "portal_card_x": 460, "portal_card_y": 360,
     "unit_info_reset_x": 3, "unit_info_reset_y": 3,
 }

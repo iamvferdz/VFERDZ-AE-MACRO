@@ -599,16 +599,10 @@ LOBBY_OVERLAY_CLOSE_IMAGE_NAMES = ("update_log_close",)
 # every one tried per search, same folder-variant mechanism as above.
 PRIORITY_UPGRADE_IMAGE_NAMES = ("priority_upgrade",)
 
-# Eclipse Infinite reward-card identity crops. These are optional Image
-# Manager assets; when absent or unmatched, the normal fallback selects a
-# visible card so Eclipse runs do not stall.
-ECLIPSE_SOUL_CARD_IMAGES = {
-    "Redeemed Soul": "eclipse_redeemed_soul",
-    "Sacrificed Soul": "eclipse_sacrificed_soul",
+ECLIPSE_CARD_COORDS = {
+    "Redeemed Soul": ("eclipse_redeemed_card_x", "eclipse_redeemed_card_y"),
+    "Sacrificed Soul": ("eclipse_sacrificed_card_x", "eclipse_sacrificed_card_y"),
 }
-# The three Eclipse Pick Card panels occupy this reference-client row. Full
-# card templates are expected, so their match center is the click target.
-ECLIPSE_CARD_SEARCH_REGION = (180, 250, 800, 280)
 
 # Roblox deep link used to rejoin after a detected disconnect -- reopens
 # (or, if the client fully closed, relaunches) straight into this specific
@@ -915,6 +909,9 @@ DEFAULT_COORDS = {
     # click point than the matched crop's center.
     "team_button_x": None, "team_button_y": None,
     "screen_middle_x": SCREEN_MIDDLE_CLICK[0], "screen_middle_y": SCREEN_MIDDLE_CLICK[1],
+    "eclipse_redeemed_card_x": 277, "eclipse_redeemed_card_y": 392,
+    "eclipse_sacrificed_card_x": 576, "eclipse_sacrificed_card_y": 392,
+    "eclipse_neutral_card_x": 876, "eclipse_neutral_card_y": 392,
     "portal_card_x": SUMMER_PORTAL_CARD_MIDDLE[0],
     "portal_card_y": SUMMER_PORTAL_CARD_MIDDLE[1],
     "unit_info_reset_x": UNIT_INFO_RESET_CLICK[0], "unit_info_reset_y": UNIT_INFO_RESET_CLICK[1],

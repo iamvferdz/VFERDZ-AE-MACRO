@@ -617,34 +617,6 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         for the ENTIRE search window. Middle-screen click picks whatever
         card is there. Returns whether one was actually found (so callers
         can loop until it's actually gone, not just fire once)."""
-        task = getattr(self, "_active_task", None) or getattr(self, "_current_task", None) or {}
-        preferred = (
-            task.get("eclipse_soul")
-            if task.get("mode") == "story" and task.get("story_event") == "Eclipsed Infinite"
-            else None
-        )
-        preferred_image = ECLIPSE_SOUL_CARD_IMAGES.get(preferred)
-        if preferred_image:
-            try:
-                preferred_match = vision.find_image(
-                    hwnd, preferred_image, region=ECLIPSE_CARD_SEARCH_REGION)
-            except vision.TemplateNotFound:
-                preferred_match = None
-                self._log(
-                    f'[Macro] Eclipse card asset "{preferred_image}" is not configured -- '
-                    "using the first available card."
-                )
-            if preferred_match is not None:
-                self._log(
-                    f'[Macro] Found preferred Eclipse card "{preferred}" '
-                    f'(score {preferred_match["score"]:.2f}) -- clicking it.'
-                )
-                self._last_reward_card_at = time.time()
-                self._last_board_disruption_at = self._last_reward_card_at
-                vision.click_match(self._mouse, hwnd, preferred_match)
-                return True
-            self._log(f'[Macro] Preferred Eclipse card "{preferred}" was not detected.')
-
         try:
             match = vision.find_image(hwnd, "select upgrade card")
         except vision.TemplateNotFound:
@@ -659,6 +631,22 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # a gamemode with no wave counter.
         self._last_reward_card_at = time.time()
         self._last_board_disruption_at = self._last_reward_card_at
+        task = getattr(self, "_active_task", None) or getattr(self, "_current_task", None) or {}
+        if task.get("mode") == "story" and task.get("story_event") == "Eclipsed Infinite":
+            preferred = task.get("eclipse_soul") or "Redeemed Soul"
+            coord_keys = ECLIPSE_CARD_COORDS.get(preferred)
+            if coord_keys:
+                card_x, card_y = vision.ref_to_screen(
+                    hwnd,
+                    self._coords[coord_keys[0]],
+                    self._coords[coord_keys[1]],
+                )
+                self._log(
+                    f'[Macro] Eclipse Pick Card detected -- selecting configured '
+                    f'"{preferred}" card at ({self._coords[coord_keys[0]]}, {self._coords[coord_keys[1]]}).'
+                )
+                self._mouse.click(card_x, card_y)
+                return True
         left, top, _, _ = wm.get_window_rect_screen(hwnd)
         self._mouse.click(left + self._coords["screen_middle_x"], top + self._coords["screen_middle_y"])
         return True
@@ -2006,6 +1994,18 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         while deadline is None or time.time() < deadline:
             if self._checkpoint(stop_event):
                 return None
+
+            # Eclipse Infinite presents the Pick Card modal repeatedly during
+            # the battle (every five waves). Check it on every live poll so
+            # the modal is handled even when no Battle block or result screen
+            # happens to trigger a card check.
+            if (task and task.get("mode") == "story"
+                    and task.get("story_event") == "Eclipsed Infinite"):
+                if self._dismiss_reward_card_if_found(hwnd):
+                    if self._checkpoint(stop_event):
+                        return None
+                    self._interruptible_sleep(MATCH_RESULT_POLL_INTERVAL, stop_event)
+                    continue
 
             # Leaving an Infinite run at its requested wave is a hard task
             # boundary, so check it before Battle blocks. Upgrade Unit can
