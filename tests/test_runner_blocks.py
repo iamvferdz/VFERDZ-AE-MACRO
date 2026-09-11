@@ -291,7 +291,14 @@ def test_place_unit_with_no_position_keeps_shift_when_the_chain_continues():
     assert runner._quick_place_shift_down is True
 
 
-def test_run_target_priority_tick():
+@pytest.mark.parametrize("priority, expected_presses", [
+    ("First", 0),
+    ("Last", 1),
+    ("Closest", 2),
+    ("Boss", 4),
+    ("None", 8),
+])
+def test_run_target_priority_tick(priority, expected_presses, monkeypatch):
     from core.runner_blocks import BlockOps
     from unittest.mock import MagicMock
 
@@ -310,21 +317,23 @@ def test_run_target_priority_tick():
             return False
 
     runner = DummyRunner()
-    block = {"type": "target_priority", "params": {"index": 1, "priority": "Boss"}}
+    block = {"type": "target_priority", "params": {"index": 1, "priority": priority}}
     stop_event = MagicMock(is_set=lambda: False)
 
-    with MagicMock():
-        from core import runner_blocks
-        original_wm = runner_blocks.wm
-        runner_blocks.wm = MagicMock(get_window_rect_screen=lambda hwnd: (0, 0, 800, 600))
-        try:
-            done = runner._run_target_priority_tick(123, stop_event, block, 1)
-        finally:
-            runner_blocks.wm = original_wm
+    from core import runner_blocks
+    monkeypatch.setattr(runner_blocks.wm, "get_window_rect_screen",
+                        lambda hwnd: (0, 0, 800, 600))
+    monkeypatch.setattr(runner_blocks.time, "sleep", lambda seconds: None)
+
+    done = runner._run_target_priority_tick(123, stop_event, block, 1)
 
     assert done is True
-    assert any("pressing R to set target priority to Boss" in log for log in runner.logs)
-    assert runner._keyboard.tap.called
+    assert any(f"pressing R {expected_presses}x" in log for log in runner.logs)
+    r_presses = [
+        call for call in runner._keyboard.tap.call_args_list
+        if call.args == (ord("R"),)
+    ]
+    assert len(r_presses) == expected_presses
 
 
 class _AutoUpgradeRunner(BlockOps):
