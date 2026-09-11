@@ -2714,7 +2714,6 @@ function setTaskProp(id, key, value) {
   if (key === 'mode') {
     const d = TASK_DATA[t.mode];
     if (d.maps) t.map = d.maps[0];
-    else if (d.isEvent) t.map = 'Event';  // no map to pick, but a label keeps logs/status readable
     else if (d.isSummer) {
       t.summer_mode = d.modes[0];
       t.map = d.isSummer && d.modes[0] === 'Portal Mode' ? d.portals[0] : 'Summer';
@@ -2723,7 +2722,7 @@ function setTaskProp(id, key, value) {
     else if (d.isEvent) {
       t.event_name = d.eventNames[0];
       t.event_gamemode = d.eventGamemodes[0];
-      t.map = 'Summer';
+      t.map = t.event_gamemode === 'Portal Mode' ? d.portals[0] : 'Summer';
       t.portal_tier = '1';
     }
     if (d.stages) t.stage = d.stages[0];

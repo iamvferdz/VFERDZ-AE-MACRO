@@ -1019,7 +1019,6 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         should stop); True in every other case, including "gave up on this
         task after repeated failures".
         """
-        map_name = task.get("map")
         mode = task.get("mode") or "story"
         # The Task Builder exposes the future-proof Event schema, while the
         # existing Summer runner already owns the navigation and portal
@@ -1029,7 +1028,12 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             task = dict(task)
             task["mode"] = "summer"
             task["summer_mode"] = task.get("event_gamemode") or "Event Mode"
+            if task["summer_mode"] == "Portal Mode":
+                task["map"] = task.get("map") or "Summer Portal"
+            else:
+                task["map"] = "Summer"
             mode = "summer"
+        map_name = task.get("map")
         repeat_total = max(1, int(task.get("repeat") or 1))
         progress_task = dict(task)
         progress_task["map"] = map_name or mode.title()

@@ -1123,6 +1123,20 @@ class BlockOps:
             return
 
         map_name = task.get("map")
+        # Event tasks use the future-proof schema
+        # Event -> Event Name -> Event Gamemode, while the shipped route
+        # table intentionally keeps the stable keys "Summer" and
+        # "Summer Portal". Resolve the route from the gamemode first so
+        # default walking does not depend on a stale/placeholder map field.
+        event_gamemode = task.get("event_gamemode")
+        summer_mode = task.get("summer_mode")
+        if task.get("mode") == "event":
+            summer_mode = event_gamemode or summer_mode
+            if summer_mode != "Portal Mode":
+                map_name = "Summer"
+        elif task.get("mode") == "summer" and summer_mode:
+            if summer_mode != "Portal Mode":
+                map_name = "Summer"
         if block.get("mode") == "custom" and block.get("pathName"):
             path_name = block["pathName"]
         else:
