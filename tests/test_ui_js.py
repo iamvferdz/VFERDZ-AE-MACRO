@@ -1378,7 +1378,8 @@ def test_target_priority_block_type_registered(tmp_path):
     console.log(JSON.stringify({
         hasBlockType: src.includes("target_priority:"),
         inPrestartAllowed: src.includes("'target_priority'"),
-        hasTargetPriorities: src.includes("TARGET_PRIORITIES")
+        hasTargetPriorities: src.includes("TARGET_PRIORITIES"),
+        hasClosestPriority: src.includes("'Closest'"),
     }));
     """
     out = run_js(body, tmp_path)

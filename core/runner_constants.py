@@ -730,6 +730,22 @@ AUTO_UPGRADE_CLEAR_HOLD = 1.0    # press-and-hold that clears it back to off
 
 AUTO_UPGRADE_CLICK_SETTLE = 0.6
 
+# Target Priority cycles forward from First whenever R is pressed. The
+# selected unit starts at First, so the item's index is the number of presses
+# needed to reach the requested priority.
+TARGET_PRIORITY_ORDER = [
+    "First",
+    "Last",
+    "Closest",
+    "Strongest",
+    "Boss",
+    "Weakest",
+    "Shielded",
+    "Fastest",
+    "None",
+]
+TARGET_PRIORITY_STEP_DELAY = 0.18
+
 # Click input searches for priority_upgrade after AUTO_UPGRADE_CLICK_SETTLE.
 # That single check was reported missing panels that were merely slow: a unit
 # placed as a wave spawns can still be rendering its info panel at 0.6s, and

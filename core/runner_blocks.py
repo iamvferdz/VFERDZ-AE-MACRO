@@ -542,8 +542,7 @@ class BlockOps:
 
     def _run_target_priority_tick(self, hwnd, stop_event: threading.Event, block: dict, block_num: int,
                                    phase_label: str = "Battle") -> bool:
-        """One-shot: click the unit, open unit info panel, tap R to set/cycle target priority.
-        Always returns True when completed."""
+        """Click the unit and cycle target priority from First to the target."""
         label = f'{phase_label} block #{block_num} (Target Priority)'
         pos = self._placed_unit_click_point(block, label)
         if pos is None:
@@ -560,8 +559,26 @@ class BlockOps:
         if self._checkpoint(stop_event):
             return True
 
-        self._log(f'{label}: clicked unit at {pos} -- pressing R to set target priority to {priority}.')
-        self._keyboard.tap(ord("R"))
+        try:
+            steps = TARGET_PRIORITY_ORDER.index(priority)
+        except ValueError:
+            self._log(
+                f'{label}: unknown target priority "{priority}" -- '
+                "defaulting to First."
+            )
+            priority = TARGET_PRIORITY_ORDER[0]
+            steps = 0
+
+        self._log(
+            f'{label}: clicked unit at {pos} -- pressing R {steps}x '
+            f'to set target priority to {priority}.'
+        )
+        for step in range(steps):
+            self._keyboard.tap(ord("R"))
+            if step < steps - 1:
+                time.sleep(TARGET_PRIORITY_STEP_DELAY)
+            if self._checkpoint(stop_event):
+                return True
         time.sleep(BATTLE_BLOCK_CLICK_SETTLE)
 
         self._reset_unit_info_panel(hwnd)

@@ -5221,8 +5221,9 @@ function renderAutoUpgradeControls(b) {
       </select>`);
 }
 
-// Target Priority: which placed unit (#index) + target priority mode (First, Last, Strongest, Boss, Weakest, Shielded, Fastest, None).
-const TARGET_PRIORITIES = ['First', 'Last', 'Strongest', 'Boss', 'Weakest', 'Shielded', 'Fastest', 'None'];
+// Target Priority: which placed unit (#index) + target priority mode (First,
+// Last, Closest, Strongest, Boss, Weakest, Shielded, Fastest, None).
+const TARGET_PRIORITIES = ['First', 'Last', 'Closest', 'Strongest', 'Boss', 'Weakest', 'Shielded', 'Fastest', 'None'];
 
 function renderTargetPriorityControls(b) {
   const current = String(b.params.priority ?? 'Boss');
