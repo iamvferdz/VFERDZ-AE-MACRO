@@ -2196,6 +2196,10 @@ const TASK_DATA = {
     isTower: true,
   },
 };
+const TASK_MAP_DEFAULTS = {
+  story: [...TASK_DATA.story.maps],
+  raid: [...TASK_DATA.raid.maps],
+};
 
 let taskCards = [];
 let selectedTaskId = null;
@@ -2252,6 +2256,18 @@ function saveTaskQueue() {
 
 async function refreshTaskTemplates() {
   try { taskTemplates = await pywebview.api.list_templates(); } catch (e) { taskTemplates = []; }
+}
+
+async function refreshTaskMapCatalog() {
+  try {
+    const catalog = await pywebview.api.list_task_map_catalog();
+    for (const mode of ['story', 'raid']) {
+      const discovered = catalog && Array.isArray(catalog[mode]) ? catalog[mode] : [];
+      TASK_DATA[mode].maps = [...new Set([...TASK_MAP_DEFAULTS[mode], ...discovered])];
+    }
+  } catch (e) {
+    addLog(`[Task] Could not refresh map catalog: ${e}`);
+  }
 }
 
 function collectCustomPathNames(templates) {
@@ -3006,6 +3022,7 @@ function renderTaskBuilder() {
 }
 
 async function refreshTaskQueue() {
+  await refreshTaskMapCatalog();
   await refreshTaskTemplates();
   try {
     // Merge over defaults, then migrate tasks saved by the old form-based
@@ -3229,7 +3246,7 @@ function renderGlobalStoryMaps() {
   if (!state) { list.innerHTML = '<div class="rh-empty">Couldn\'t load Global Story settings.</div>'; return; }
   const opts = current => '<option value="">No Macro</option>' +
     taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === current ? 'selected' : ''}>&#9654; ${escapeHtml(n)}</option>`).join('');
-  list.innerHTML = CHALLENGE_STORY_MAPS.map(map => `
+  list.innerHTML = Object.keys(state.maps).map(map => `
     <div class="task-card" style="--tqc: var(--teal); cursor: default;">
       <div class="tq-text" style="min-width: 0;">
         <div class="tq-title">${escapeHtml(map)}</div>

@@ -231,6 +231,11 @@ BOUNTY_DAILY_TOTAL = 10
 BOUNTY_RESET_SCHEDULE = CHALLENGE_RESET_SCHEDULE
 
 
+def _global_story_map_names() -> list:
+    from core import maps
+    return sorted(set(CHALLENGE_STORY_MAPS) | set(maps.list_story_maps()), key=str.casefold)
+
+
 def _current_challenge_reset_period(now: float = None) -> str:
     """Identifier for the game day containing *now*.
 
@@ -1267,21 +1272,23 @@ class Api:
 
     def get_global_story_settings(self) -> dict:
         saved = cfg.load().get("global_story") or {}
+        map_names = _global_story_map_names()
         maps = {
             name: {"macro": ((saved.get("maps") or {}).get(name) or {}).get("macro") or ""}
-            for name in CHALLENGE_STORY_MAPS
+            for name in map_names
         }
         result = {"maps": maps}
-        result.update(self._story_macro_setup(result, CHALLENGE_STORY_MAPS))
+        result.update(self._story_macro_setup(result, map_names))
         return result
 
     def set_global_story_map_macro(self, map_name: str, macro: str) -> dict:
-        if map_name not in CHALLENGE_STORY_MAPS:
+        map_names = _global_story_map_names()
+        if map_name not in map_names:
             return {"ok": False, "reason": "bad_map"}
         settings = self.get_global_story_settings()
         settings["maps"][map_name]["macro"] = macro or ""
         cfg.update({"global_story": {"maps": settings["maps"]}})
-        return {"ok": True, **self._story_macro_setup(settings, CHALLENGE_STORY_MAPS)}
+        return {"ok": True, **self._story_macro_setup(settings, map_names)}
 
     @staticmethod
     def _bounty_macro_setup(settings: dict) -> dict:
@@ -3916,10 +3923,10 @@ class Api:
         webbrowser.open(updater.RELEASES_PAGE_URL)
         return {"ok": True}
 
-    YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@Cweamya/videos"
+    YOUTUBE_CHANNEL_URL = "https://www.youtube.com/@vferdz/videos"
     # Where people share routines with each other. The Examples picker points
     # at it, since only a handful can reasonably ship with the app.
-    COMMUNITY_URL = "https://discord.gg/creams"
+    COMMUNITY_URL = "https://discord.gg/jupXMjZg8J"
 
     def open_youtube_channel(self) -> dict:
         # The one-time subscribe prompt's button -- opens the creator's
@@ -4073,6 +4080,13 @@ class Api:
     def list_maps(self, category: str) -> list:
         from core import maps
         return maps.list_maps(category)
+
+    def list_task_map_catalog(self) -> dict:
+        from core import maps
+        return {
+            "story": sorted(set(CHALLENGE_STORY_MAPS) | set(maps.list_story_maps()), key=str.casefold),
+            "raid": sorted({"Snowy Castle", "Spirit City"} | set(maps.list_raid_maps()), key=str.casefold),
+        }
 
     def get_map_image(self, category: str, name: str) -> dict:
         from core import maps

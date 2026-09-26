@@ -183,6 +183,55 @@ def test_tournament_task_summary_names_its_type_and_hides_play_mode(tmp_path):
     assert "Boss Rush" in out["meta"]
 
 
+def test_task_map_catalog_refresh_adds_discovered_maps(tmp_path):
+    out = run_js("""
+        const TASK_DATA = {
+          story: { maps: ['School Grounds'] },
+          raid: { maps: ['Snowy Castle'] },
+        };
+        const TASK_MAP_DEFAULTS = {
+          story: ['School Grounds'],
+          raid: ['Snowy Castle'],
+        };
+        const pywebview = {api: {list_task_map_catalog: async () => ({
+          story: ['New Story'],
+          raid: ['New Raid'],
+        })}};
+        function addLog() {}
+        eval(extract('refreshTaskMapCatalog'));
+        (async () => {
+          await refreshTaskMapCatalog();
+          console.log(JSON.stringify({
+            story: TASK_DATA.story.maps,
+            raid: TASK_DATA.raid.maps,
+          }));
+        })();
+    """, tmp_path)
+    assert out == {
+        "story": ["School Grounds", "New Story"],
+        "raid": ["Snowy Castle", "New Raid"],
+    }
+
+
+def test_global_story_map_rows_render_discovered_maps(tmp_path):
+    out = run_js("""
+        const globalStoryState = {
+          maps: {'School Grounds': {macro: ''}, 'New Story': {macro: 'Farm'}},
+        };
+        const taskTemplates = ['Farm'];
+        const list = {innerHTML: ''};
+        const document = {getElementById: id => id === 'global-story-map-list' ? list : null};
+        function escapeHtml(value) { return String(value); }
+        function escJs(value) { return value.replace(/'/g, "\\\\'"); }
+        eval(extract('renderGlobalStoryMaps'));
+        renderGlobalStoryMaps();
+        console.log(JSON.stringify(list.innerHTML));
+    """, tmp_path)
+    assert "School Grounds" in out
+    assert "New Story" in out
+    assert "value=\"Farm\" selected" in out
+
+
 def test_tower_mode_defaults_to_rose_kingdom_and_traitless_summary_chip(tmp_path):
     out = run_js("""
         const TASK_DATA = {
