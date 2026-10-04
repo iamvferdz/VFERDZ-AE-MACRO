@@ -24,3 +24,29 @@ def test_team_button_coordinate_override_can_be_saved_and_cleared(monkeypatch):
     assert coords["team_button_x"] is None
     assert coords["team_button_y"] is None
     assert api.clear_macro_coord("screen_middle")["ok"] is False
+
+
+def test_boss_rush_card_coordinates_can_be_saved_and_read_back(monkeypatch):
+    state = {}
+    monkeypatch.setattr(main.cfg, "load", lambda: dict(state))
+
+    def update(patch):
+        state.update(patch)
+        return dict(state)
+
+    monkeypatch.setattr(main.cfg, "update", update)
+    api = object.__new__(main.Api)
+
+    changes = {
+        "boss_rush_card_left_x": 220,
+        "boss_rush_card_left_y": 340,
+        "boss_rush_card_middle_x": 570,
+        "boss_rush_card_middle_y": 345,
+        "boss_rush_card_right_x": 910,
+        "boss_rush_card_right_y": 350,
+    }
+    assert api.set_macro_coords(changes)["saved"] == list(changes)
+    assert api.set_macro_coord("boss_rush_card_right_x", 920)["ok"] is True
+    changes["boss_rush_card_right_x"] = 920
+    assert {key: api.get_macro_coords()[key] for key in changes} == changes
+    assert all(key in main.MACRO_COORD_DEFAULTS for key in changes)

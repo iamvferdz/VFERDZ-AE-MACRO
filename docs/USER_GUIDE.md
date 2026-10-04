@@ -233,6 +233,53 @@ Open **Task**, add tasks in the order they should run, and configure each one:
 4. Assign the saved Macro Manager operation to the task.
 5. Save the queue or export it if you want a backup/shareable setup.
 
+Story tasks also offer the recurring Story Events, including Infernal Cult;
+the macro finds the event and its stage using the corresponding Image Manager
+references. Boss Rush is available as a separate mode for District 7. The macro
+selects that map and then uses the existing Select Stage / Solo or Matchmaking
+flow; there is no stage picker, and the numbered circles on its detail screen
+are reward previews. Its difficulty is fixed to Hard in-game.
+
+Boss Rush tasks also have **Gates Before Boss** (1-6) and a **Gate Card**
+preference (left/Flame, middle/Light, right/Dark). In **Resource > Boss Rush
+Routes**, record a separate route from spawn to each gate you intend to clear;
+the macro replays the route and presses E at the end. Each route should finish
+close enough to the gate's interaction prompt. Boss Rush runs the task's
+camera/loadout setup first, then starts the round, follows the gate route, and
+only then runs the task's **Pre Start** placement blocks inside Gate 1. It
+clicks that gate's **Start Game** after placement. Later gates skip the normal
+Pre Start blocks and only click **Start Game** after following their route, so
+you do not need to set the placement blocks to **Once** for Boss Rush. Keep
+normal-gate unit placements in **Pre Start**; do not move them to Battle, which
+is the repeating in-match phase. After each gate, the configured card is selected, then the
+game automatically returns to the gates map after Gate 1, so no Continue
+prompt is expected there; the macro immediately follows the Gate 2 route.
+From Gate 2 onward, it chooses Continue until the requested gate count is
+reached, then chooses Fight Boss for a 1-5 gate run. For a six-gate run, it
+also selects Continue after Gate 6, then runs the Boss Setup Macro at the Boss
+Gate without trying to route to a nonexistent Gate 7. The boss setup clicks
+its **Start Game** after unit placement. A
+**Boss Setup Macro** is required because units must be placed again at the
+boss; assign a placement-only Macro Manager operation to it. The regular
+**Macro Operation** is used for the normal gates.
+
+Boss Rush card and choice dialogs need three Image Manager references. Capture
+the visible Pick Card prompt as `boss_rush_pick_card`, and capture the
+Continue and Fight Boss buttons separately as `boss_rush_continue` and
+`boss_rush_fight_boss`. These should be tight crops of the distinct prompt or
+button, not the unrelated Select Upgrade image. Since finding the Pick Card
+prompt does not determine where the selected card is, set the three separate
+Boss Rush card click positions under **Settings > Debug > Macro Coordinates**
+using **Pick** while the Boss Rush cards are visible. These positions are
+separate from Eclipse Infinite's and should target the center of each card.
+The macro verifies that the Pick Card prompt closes and retries the configured
+click if needed. It also makes a lower-sensitivity fallback search for the
+Continue/Fight Boss button. If it still cannot confirm the next decision, it
+stops the Boss Rush task in place and saves a screenshot rather than returning
+to the lobby and restarting the run.
+Fight Boss is required when the configured gate count is 1-5; the six-gate
+route transitions to the boss automatically.
+
 For challenges, open **Challenge** separately. Enable Daily and/or the desired
 Regular Challenge slots, select Solo or Matchmaking, and assign an operation
 for each map that may appear. Challenge automation runs before the normal task

@@ -537,6 +537,7 @@ function switchScreen(name) {
   if (name === 'creation') { refreshTemplateList(); refreshSavedPaths(); refreshSavedRecordings(); }
   if (name === 'task') refreshTaskQueue();
   if (name === 'resource') {
+    refreshSavedPaths();
     refreshCraftingScreen();
     refreshFuelScreen();
     refreshAutoShopScreen();
@@ -2150,8 +2151,16 @@ const TASK_DATA = {
     label: 'Story',
     maps: ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'],
     stages: ['1', '2', '3', '4', '5', 'Infinite', 'Mastery'],
-    events: ['Normal', 'Eclipsed Infinite', 'Golden Hour'],
+    events: ['Normal', 'Eclipsed Infinite', 'Golden Hour', 'Infernal Cult'],
     difficulties: ['Normal', 'Hard'],
+  },
+  boss_rush: {
+    label: 'Boss Rush',
+    maps: ['District 7'],
+    fixedDifficulty: 'Hard',
+    boss_rush_gates: '6',
+    boss_rush_card: 'left',
+    boss_rush_boss_macro: '',
   },
   raid: {
     label: 'Raid',
@@ -2755,6 +2764,11 @@ function setTaskProp(id, key, value) {
       if (!t.tower_mode) t.tower_mode = 'normal';
       t.play_mode = 'solo';
     }
+    if (t.mode === 'boss_rush') {
+      t.boss_rush_gates = String(t.boss_rush_gates || '6');
+      t.boss_rush_card = t.boss_rush_card || 'left';
+      t.boss_rush_boss_macro = t.boss_rush_boss_macro || '';
+    }
   }
   if (key === 'summer_mode') {
     t.map = value === 'Portal Mode' ? TASK_DATA.summer.portals[0] : 'Summer';
@@ -2772,7 +2786,8 @@ function setTaskProp(id, key, value) {
   }
   if (key === 'story_event' && t.mode === 'story') {
     t.stage = value === 'Eclipsed Infinite' ? 'Infinite'
-      : value === 'Golden Hour' ? 'Golden Hour' : '1';
+      : value === 'Golden Hour' ? 'Golden Hour'
+      : value === 'Infernal Cult' ? 'Infernal Cult' : '1';
     t.difficulty = value === 'Normal' ? 'Normal' : 'Hard';
     if (value !== 'Eclipsed Infinite') t.eclipse_soul = '';
     else if (!['Redeemed Soul', 'Sacrificed Soul'].includes(t.eclipse_soul)) t.eclipse_soul = 'Redeemed Soul';
@@ -2789,21 +2804,27 @@ function setTaskProp(id, key, value) {
   saveTaskQueue();
 }
 
-function taskOpts(list, current, fmt) {
-  return list.map(o => `<option value="${escapeHtml(o)}" ${String(o) === String(current) ? 'selected' : ''}>${escapeHtml(fmt ? fmt(o) : o)}</option>`).join('');
+function taskOpts(list, current, fmt, disabledOptions = []) {
+  return list.map(o => {
+    const disabled = disabledOptions.includes(String(o));
+    const label = `${fmt ? fmt(o) : o}${disabled ? ' · Unavailable' : ''}`;
+    return `<option value="${escapeHtml(o)}" ${String(o) === String(current) ? 'selected' : ''} ${disabled ? 'disabled' : ''}>${escapeHtml(label)}</option>`;
+  }).join('');
 }
 
 // One accent per mode so the queue scans by color before you even read it.
-const TASK_MODE_COLORS = { story: 'var(--brand)', raid: 'var(--rose)', expedition: 'var(--teal)', event: 'var(--amber)', summer: 'var(--amber)', tournament: 'var(--lilac)', tower: 'var(--slate)' };
+const TASK_MODE_COLORS = { story: 'var(--brand)', boss_rush: 'var(--rose)', raid: 'var(--rose)', expedition: 'var(--teal)', event: 'var(--amber)', summer: 'var(--amber)', tournament: 'var(--lilac)', tower: 'var(--slate)' };
 
 // The two text lines a queue row shows for a task -- where it goes, then how
 // it runs. All editing happens in the Builder, rows are read-only summaries.
 function taskSummary(t) {
   const d = TASK_DATA[t.mode];
   let title = d.label;
-  if (t.mode === 'story' || t.mode === 'raid') {
+  if (t.mode === 'story' || t.mode === 'raid' || t.mode === 'boss_rush') {
     if (t.mode === 'story' && t.story_event && t.story_event !== 'Normal') {
       title += ` · ${t.story_event}`;
+    } else if (t.mode === 'boss_rush') {
+      title += ` · ${t.map}`;
     } else {
       title += ` · ${t.map} · ${/^\d+$/.test(t.stage) ? 'Stage ' + t.stage : t.stage}`;
     }
@@ -2828,6 +2849,7 @@ function taskSummary(t) {
   const meta = [
     `×${t.repeat}`,
     diff,
+    t.mode === 'boss_rush' ? `${t.boss_rush_gates || 6} gates · ${{ left: 'Flame', middle: 'Light', right: 'Dark' }[t.boss_rush_card] || 'Flame'} card` : '',
     t.mode === 'story' && t.stage === 'Infinite'
       ? `Stop after wave ${t.infinite_wave_limit || DEFAULT_INFINITE_WAVE_LIMIT}` : '',
     t.tower_mode === 'traitless' ? 'Traitless' : '',
@@ -2893,24 +2915,34 @@ function renderTaskBuilder() {
     return;
   }
   const d = TASK_DATA[t.mode];
-  const sel = (key, options, fmt, tooltip = '') => `
+  const sel = (key, options, fmt, tooltip = '', disabledOptions = []) => `
     <select class="task-select" onchange="setTaskProp('${t.id}', '${key}', this.value)" ${tooltip ? `data-tooltip="${escapeHtml(tooltip)}"` : ''}>
-      ${taskOpts(options, t[key], fmt)}
+      ${taskOpts(options, t[key], fmt, disabledOptions)}
     </select>`;
   const field = (label, control, tooltip = '') => `<div class="task-field" ${tooltip ? `data-tooltip="${escapeHtml(tooltip)}"` : ''}><span>${label}</span>${control}</div>`;
 
   const fields = [
-    field('Mode', sel('mode', Object.keys(TASK_DATA), k => TASK_DATA[k].label, 'Select game mode: Story, Raid, Expedition, Event, Summer, Tournament, or Tower'), 'Choose game mode'),
+    field('Mode', sel('mode', Object.keys(TASK_DATA), k => TASK_DATA[k].label, 'Select a game mode'), 'Choose game mode'),
     field('Repeat', `<div class="task-rep-group" style="width: 100%;">&times;<input type="number" min="1" value="${t.repeat}"
       oninput="setTaskProp('${t.id}', 'repeat', Math.max(1, parseInt(this.value, 10) || 1))"></div>`, 'Number of times to run this task'),
   ];
 
-  if (t.mode === 'story' || t.mode === 'raid') {
+  if (t.mode === 'story' || t.mode === 'raid' || t.mode === 'boss_rush') {
     if (t.mode === 'story') {
       fields.push(field('Story Event', sel('story_event', d.events, null,
-        'Normal Story, Eclipsed Infinite, or Golden Hour')));
+        'Normal Story, Eclipsed Infinite, Golden Hour, or Infernal Cult')));
     }
-    if (t.mode === 'story' && t.story_event !== 'Normal') {
+    if (t.mode === 'boss_rush') {
+      fields.push(field('Map', `<span class="task-chip" style="align-self: flex-start;">District 7</span>`,
+        'Boss Rush currently has one map: District 7'));
+      fields.push(field('Gates Before Boss', sel('boss_rush_gates', ['1', '2', '3', '4', '5', '6'], n => `${n} gate${n === '1' ? '' : 's'}`,
+        'Choose 2-6 gates before the boss. One gate is unavailable in this task.', ['1'])));
+      fields.push(field('Gate Card', sel('boss_rush_card', ['left', 'middle', 'right'], side => ({
+        left: 'Left · Flame',
+        middle: 'Middle · Light',
+        right: 'Right · Dark',
+      }[side]), 'Choose the card that best fits your team.')));
+    } else if (t.mode === 'story' && t.story_event !== 'Normal') {
       fields.push(field('Map', '<span class="task-chip" style="align-self: flex-start;">Automatic · event location</span>',
         'The macro scans every Story map until it finds the selected Story Event'));
     } else {
@@ -2918,11 +2950,13 @@ function renderTaskBuilder() {
     }
     const stageTooltip = t.mode === 'raid' ? 'Select Raid Act 1, Act 2, or Act 3'
       : 'Select Stage 1-5, Infinite, or Mastery';
-    if (t.mode === 'story' && t.story_event !== 'Normal') {
-      fields.push(field('Stage', `<span class="task-chip" style="align-self: flex-start;">Automatic · locked</span>`,
-        'The macro selects the event stage using its Image Manager template'));
-    } else {
-      fields.push(field('Stage', sel('stage', d.stages, s => /^\d+$/.test(s) ? 'Stage ' + s : s, stageTooltip), stageTooltip));
+    if (t.mode !== 'boss_rush') {
+      if (t.mode === 'story' && t.story_event !== 'Normal') {
+        fields.push(field('Stage', `<span class="task-chip" style="align-self: flex-start;">Automatic · locked</span>`,
+          'The macro selects the event stage using its Image Manager template'));
+      } else {
+        fields.push(field('Stage', sel('stage', d.stages, s => /^\d+$/.test(s) ? 'Stage ' + s : s, stageTooltip), stageTooltip));
+      }
     }
     if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite') {
       fields.push(field('Eclipse Soul', sel('eclipse_soul', ['Redeemed Soul', 'Sacrificed Soul'], null,
@@ -2979,6 +3013,16 @@ function renderTaskBuilder() {
     fields.push(field('Extract After', `<input type="number" class="block-input" min="0" max="${MAX_EXTRACT_AFTER}" step="1" value="${t.extract_after}"
       onchange="this.value = normalizeExtractAfter(this.value); setTaskProp('${t.id}', 'extract_after', this.value)">`,
       `Number of extraction prompts to decline before extracting (maximum ${MAX_EXTRACT_AFTER})`));
+  }
+
+  if (t.mode === 'boss_rush') {
+    const bossMacroSel = `
+      <select class="task-select" onchange="setTaskProp('${t.id}', 'boss_rush_boss_macro', this.value)">
+        <option value="">Select Boss Setup Macro</option>
+        ${taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === t.boss_rush_boss_macro ? 'selected' : ''}>${escapeHtml(n)}</option>`).join('')}
+      </select>`;
+    fields.push(field('Boss Setup Macro', bossMacroSel,
+      'Required placement-only macro run after entering the boss gate.'));
   }
 
   // Tournament and Tower have no Solo/Matchmaking choice -- their runner paths
@@ -3063,6 +3107,7 @@ async function refreshTaskQueue() {
       if (!TASK_DATA.story.events.includes(t.story_event)) t.story_event = 'Normal';
       if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite') t.stage = 'Infinite';
       if (t.mode === 'story' && t.story_event === 'Golden Hour') t.stage = 'Golden Hour';
+      if (t.mode === 'story' && t.story_event === 'Infernal Cult') t.stage = 'Infernal Cult';
       if (t.mode === 'story' && t.story_event === 'Eclipsed Infinite'
           && !['Redeemed Soul', 'Sacrificed Soul'].includes(t.eclipse_soul)) t.eclipse_soul = 'Redeemed Soul';
       if (t.story_event !== 'Eclipsed Infinite') t.eclipse_soul = '';
@@ -3103,7 +3148,9 @@ async function refreshTaskQueue() {
   function taskLabel(t) {
     const d = TASK_DATA[t.mode];
     let s = d.label;
-    if (t.mode === 'story' || t.mode === 'raid') s += ` · ${t.map} · ${/^\d+$/.test(t.stage) ? 'Stage ' + t.stage : t.stage}`;
+    if (t.mode === 'story' && t.story_event && t.story_event !== 'Normal') s += ` · ${t.story_event}`;
+    else if (t.mode === 'boss_rush') s += ` · ${t.map}`;
+    else if (t.mode === 'story' || t.mode === 'raid') s += ` · ${t.map} · ${/^\d+$/.test(t.stage) ? 'Stage ' + t.stage : t.stage}`;
     if (t.mode === 'expedition') s += ` · ${t.map}`;
     return `${s} ×${t.repeat}`;
   }
@@ -4566,6 +4613,55 @@ async function refreshSavedPaths() {
   const defaultSel = document.getElementById('default-walk-path');
   if (defaultSel) { const prev = defaultSel.value; defaultSel.innerHTML = options; defaultSel.value = prev; }
   await loadDefaultWalkPaths();
+  if (document.getElementById('boss-rush-path-list')) refreshBossRushPaths();
+}
+
+async function refreshBossRushPaths() {
+  const host = document.getElementById('boss-rush-path-list');
+  if (!host) return;
+  try {
+    const result = await pywebview.api.get_boss_rush_paths();
+    if (!result || !result.ok) throw new Error('Could not load Boss Rush routes.');
+    const routes = result.paths || {};
+    host.innerHTML = Array.from({ length: 6 }, (_, index) => {
+      const gate = index + 1;
+      const selected = routes[String(gate)] || '';
+      const options = savedPaths.map(name =>
+        `<option value="${escapeHtml(name)}" ${name === selected ? 'selected' : ''}>${escapeHtml(name)}</option>`
+      ).join('');
+      return `<div class="setting-row" style="padding: 8px 0;">
+        <div><div class="setting-label">Spawn → Gate ${gate}</div>
+          <div class="setting-desc">${selected ? 'Route assigned' : 'No route assigned'}</div></div>
+        <div class="flex items-center gap-2">
+          <select class="task-select" style="min-width: 190px;" onchange="setBossRushPath(${gate}, this.value)">
+            <option value="">Not assigned</option>
+            ${options}
+          </select>
+          <button class="task-toolbar-btn" onclick="toggleRecordBossRushPath(${gate})">Record</button>
+        </div>
+      </div>`;
+    }).join('');
+    const assigned = Object.values(routes).filter(Boolean).length;
+    const state = document.getElementById('boss-rush-path-state');
+    const summary = document.getElementById('boss-rush-path-summary');
+    if (state) state.textContent = `${assigned} / 6 ready`;
+    if (summary) summary.textContent = assigned
+      ? `${assigned} Spawn → Gate route${assigned === 1 ? '' : 's'} assigned.`
+      : 'Assign Spawn → Gate 1-6 walk paths.';
+  } catch (error) {
+    host.innerHTML = '<div class="wh-hint">Could not load Boss Rush routes. Check the application log.</div>';
+    addLog(`[Boss Rush] Could not load routes: ${error.message || error}`);
+  }
+}
+
+async function setBossRushPath(gate, pathName) {
+  try {
+    const result = await pywebview.api.set_boss_rush_path(gate, pathName);
+    if (!result || !result.ok) throw new Error(result && result.reason || 'save failed');
+    await refreshBossRushPaths();
+  } catch (error) {
+    addLog(`[Boss Rush] Could not assign Gate ${gate} route: ${error.message || error}`);
+  }
 }
 
 async function refreshSavedRecordings() {
@@ -4631,6 +4727,9 @@ const MACRO_COORD_KEYS = [
   'eclipse_redeemed_card_x', 'eclipse_redeemed_card_y',
   'eclipse_sacrificed_card_x', 'eclipse_sacrificed_card_y',
   'eclipse_neutral_card_x', 'eclipse_neutral_card_y',
+  'boss_rush_card_left_x', 'boss_rush_card_left_y',
+  'boss_rush_card_middle_x', 'boss_rush_card_middle_y',
+  'boss_rush_card_right_x', 'boss_rush_card_right_y',
   'unit_info_reset_x', 'unit_info_reset_y',
 ];
 
@@ -4739,15 +4838,17 @@ async function saveMatchmakingRegionDebug(btn) {
 // A recording target keeps both its owner and return screen. Macro Manager
 // blocks and Auto Fuel routes share the same recorder and naming flow.
 let pendingRecordingTarget = null;
+let recordingBossRushGate = null;
 
 function stopActiveRecording() {
   if (recordingBlockId) toggleRecordPath(recordingBlockId);
   else if (recordingFuelPathKey) toggleRecordFuelPath(recordingFuelPathKey);
+  else if (recordingBossRushGate !== null) toggleRecordBossRushPath(recordingBossRushGate);
   else if (recordingMacroBlockId) toggleRecordMacro(recordingMacroBlockId);
 }
 
 async function startRecordingTarget(target) {
-  if (recordingBlockId || recordingFuelPathKey || recordingMacroBlockId) return;
+  if (recordingBlockId || recordingFuelPathKey || recordingBossRushGate !== null || recordingMacroBlockId) return;
   closeFuelPaths();
   switchScreen('dashboard');
   await new Promise(resolve => setTimeout(resolve, 200));
@@ -4755,23 +4856,27 @@ async function startRecordingTarget(target) {
     const result = await pywebview.api.start_path_recording();
     if (result.ok) {
       if (target.kind === 'fuel') recordingFuelPathKey = target.pathKey;
+      else if (target.kind === 'boss_rush') recordingBossRushGate = target.gate;
       else recordingBlockId = target.blockId;
       const textEl = document.getElementById('rec-popout-text');
       if (textEl) textEl.textContent = 'Recording path (WASD + I/O) - timer starts on your first key';
       document.getElementById('rec-popout').style.display = 'flex';
-      addLog(`[${target.kind === 'fuel' ? 'Fuel' : 'Macro Manager'}] Recording path -- walk with WASD (I/O also recorded, timer starts on your first key), then click Stop Recording.`);
+      const owner = target.kind === 'fuel' ? 'Fuel' : target.kind === 'boss_rush' ? 'Boss Rush' : 'Macro Manager';
+      addLog(`[${owner}] Recording path -- walk with WASD (I/O also recorded, timer starts on your first key), then click Stop Recording.`);
     } else {
       addLog(`[Path Recorder] Couldn't start recording: ${result.reason || 'error'}`);
     }
   } catch (e) {}
   renderPhases();
   renderFuelPaths();
+  if (target.kind === 'boss_rush') refreshBossRushPaths();
 }
 
 async function stopRecordingTarget(target) {
   pendingRecordingTarget = target;
   recordingBlockId = null;
   recordingFuelPathKey = null;
+  recordingBossRushGate = null;
   document.getElementById('rec-popout').style.display = 'none';
   // Stop the physical-key poll before opening the name field, otherwise
   // typing WASD into the field would append fake movement to the route.
@@ -4810,7 +4915,21 @@ async function toggleRecordFuelPath(pathKey) {
     });
     return;
   }
+
   await startRecordingTarget({ kind: 'fuel', pathKey, returnScreen: 'resource' });
+}
+
+async function toggleRecordBossRushPath(gate) {
+  if (recordingBossRushGate === gate) {
+    await stopRecordingTarget({
+      kind: 'boss_rush',
+      gate,
+      returnScreen: 'resource',
+      suggestedName: `Boss Rush - Gate ${gate}`,
+    });
+    return;
+  }
+  await startRecordingTarget({ kind: 'boss_rush', gate, returnScreen: 'resource' });
 }
 
 // "Save Recorded Path" modal (#path-name-modal): Save persists the
@@ -4829,6 +4948,10 @@ async function savePathName() {
         await pywebview.api.set_fuel_path(pendingRecordingTarget.pathKey, result.name);
         await refreshFuelScreen();
         addLog(`[Fuel] Saved and assigned path "${result.name}".`);
+      } else if (pendingRecordingTarget && pendingRecordingTarget.kind === 'boss_rush') {
+        await pywebview.api.set_boss_rush_path(pendingRecordingTarget.gate, result.name);
+        await refreshBossRushPaths();
+        addLog(`[Boss Rush] Saved and assigned Gate ${pendingRecordingTarget.gate} route "${result.name}".`);
       } else {
         const blockId = pendingRecordingTarget && pendingRecordingTarget.blockId;
         const loc = blockId ? findBlockLocation(blockId) : null;
@@ -6094,6 +6217,11 @@ let imState = {
 // folder, so there's no tab to pick wrong. Names not listed here just show no
 // description (e.g. a brand-new template someone added by hand).
 const IMAGE_DESCRIPTIONS = {
+  boss_rush: "The Boss Rush card under Progressive on the Play menu.",
+  boss_rush_pick_card: "The Boss Rush Pick Card popup shown after clearing a gate.",
+  boss_rush_continue: "The Continue button on the Boss Rush post-card decision popup.",
+  boss_rush_fight_boss: "The Fight Boss button on the Boss Rush post-card decision popup.",
+  "District 7": "The District 7 Boss Rush map card.",
   cannot_place: "Shown when a unit-placement spot is invalid (can't place here).",
   chal_enter: "The Challenge mode Enter/Join button.",
   chal_select: "The Challenge mode select button.",
@@ -6140,6 +6268,8 @@ const IMAGE_DESCRIPTIONS = {
   return: "The 'Return to Lobby' confirmation after Leave Stage.",
   "select upgrade card": "The level-up 'Select an upgrade!' reward-card popup.",
   story: "The Story card on the Play menu.",
+  story_infernal_cult: "The Infernal Cult Story Event card.",
+  story_infernal_cult_stage: "The Infernal Cult event stage choice.",
   team: "The Team Loadout panel (opened with H).",
   teleportstuck: "Legacy normal-loading reference; no longer used as a disconnect signal.",
   toggle_false: "A Settings toggle in its OFF state.",

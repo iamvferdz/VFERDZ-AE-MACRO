@@ -64,6 +64,15 @@ GAMEMODE_CLICK_TIMEOUT = 8.0  # how long to search for the Raid card once the me
 # Check immediately afterward and, if that opened a party overlay, dismiss
 # it and retry the exact intended card instead of claiming navigation worked.
 GAMEMODE_OVERLAY_CHECK_DELAY = 0.5
+BOSS_RUSH_TRANSITION_DELAY = 2.0
+BOSS_RUSH_CARD_CLICK_ATTEMPTS = 3
+BOSS_RUSH_CARD_CLICK_VERIFY_TIMEOUT = 1.5
+BOSS_RUSH_CARD_CLICK_RETRY_DELAY = 2.0
+BOSS_RUSH_DECISION_TIMEOUT = 25.0
+BOSS_RUSH_DECISION_CLOSE_TIMEOUT = 5.0
+BOSS_RUSH_DECISION_FALLBACK_DELAY = 3.0
+BOSS_RUSH_DECISION_FALLBACK_THRESHOLD = 0.82
+BOSS_RUSH_CONTINUE_CLICK_ATTEMPTS = 3
 GAMEMODE_OVERLAY_RETRY_ATTEMPTS = 2
 # A perfectly-matched Play click that never opens the gamemode menu is
 # exactly the "click didn't register" focus flakiness _click_play's own
@@ -308,6 +317,7 @@ STORY_STAGE_VISUAL_IMAGES = {"Infinite": "stage_infinite"}
 STORY_EVENT_STAGE_IMAGES = {
     "Eclipsed Infinite": "story_eclipsed_infinite_stage",
     "Golden Hour": "story_golden_hour_stage",
+    "Infernal Cult": "story_infernal_cult_stage",
 }
 STORY_STAGE_SEARCH_REGION = (140, 120, 200, 560)
 STORY_STAGE_MATCH_THRESHOLD = 0.82
@@ -602,6 +612,11 @@ PRIORITY_UPGRADE_IMAGE_NAMES = ("priority_upgrade",)
 ECLIPSE_CARD_COORDS = {
     "Redeemed Soul": ("eclipse_redeemed_card_x", "eclipse_redeemed_card_y"),
     "Sacrificed Soul": ("eclipse_sacrificed_card_x", "eclipse_sacrificed_card_y"),
+}
+BOSS_RUSH_CARD_COORDS = {
+    "left": ("boss_rush_card_left_x", "boss_rush_card_left_y"),
+    "middle": ("boss_rush_card_middle_x", "boss_rush_card_middle_y"),
+    "right": ("boss_rush_card_right_x", "boss_rush_card_right_y"),
 }
 
 # Roblox deep link used to rejoin after a detected disconnect -- reopens
@@ -928,6 +943,9 @@ DEFAULT_COORDS = {
     "eclipse_redeemed_card_x": 277, "eclipse_redeemed_card_y": 392,
     "eclipse_sacrificed_card_x": 576, "eclipse_sacrificed_card_y": 392,
     "eclipse_neutral_card_x": 876, "eclipse_neutral_card_y": 392,
+    "boss_rush_card_left_x": 277, "boss_rush_card_left_y": 392,
+    "boss_rush_card_middle_x": 576, "boss_rush_card_middle_y": 392,
+    "boss_rush_card_right_x": 876, "boss_rush_card_right_y": 392,
     "portal_card_x": SUMMER_PORTAL_CARD_MIDDLE[0],
     "portal_card_y": SUMMER_PORTAL_CARD_MIDDLE[1],
     "unit_info_reset_x": UNIT_INFO_RESET_CLICK[0], "unit_info_reset_y": UNIT_INFO_RESET_CLICK[1],

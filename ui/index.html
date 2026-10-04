@@ -953,6 +953,25 @@
             </div>
           </details>
 
+          <details id="resource-card-boss-rush" class="resource-card">
+            <summary class="resource-card-head">
+              <span class="resource-card-icon">BR</span>
+              <span class="resource-card-copy">
+                <span class="resource-card-title">Boss Rush Routes</span>
+                <span id="boss-rush-path-summary" class="resource-card-desc">Assign Spawn → Gate 1-6 walk paths.</span>
+              </span>
+              <span id="boss-rush-path-state" class="resource-card-state">0 / 6 ready</span>
+              <span class="resource-card-chevron">&#8250;</span>
+            </summary>
+            <div class="resource-card-body">
+              <div class="wh-hint" style="margin-bottom: 8px;">
+                Record each route starting at spawn and ending in range of that gate’s Enter prompt.
+                The macro taps E after replaying the route. All routes up to the selected gate count are required.
+              </div>
+              <div id="boss-rush-path-list" class="flex flex-col gap-1.5"></div>
+            </div>
+          </details>
+
           <!-- Future resource sections (Auto Fuel, Gold, Geode, ...) go here. -->
 
         </div>
@@ -1802,6 +1821,37 @@
                   <input id="coord-eclipse_neutral_card_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_neutral_card_x', this.value)">
                   <input id="coord-eclipse_neutral_card_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('eclipse_neutral_card_y', this.value)">
                   <button onclick="openCoordPicker('eclipse_neutral_card')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the right neutral card">Pick</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-row" style="display: block; padding: 14px;">
+            <div class="setting-label">Boss Rush Pick Card</div>
+            <div class="setting-desc" style="margin-bottom: 12px;">Configure Boss Rush's independent card-click positions. Show the Boss Rush Pick Card panel before using Pick; these coordinates do not change Eclipse Infinite.</div>
+            <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+              <div style="min-width: 0;">
+                <div class="setting-label">Left · Flame</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-boss_rush_card_left_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_left_x', this.value)">
+                  <input id="coord-boss_rush_card_left_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_left_y', this.value)">
+                  <button onclick="openCoordPicker('boss_rush_card_left')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the center of the left Flame card">Pick</button>
+                </div>
+              </div>
+              <div style="min-width: 0;">
+                <div class="setting-label">Middle · Light</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-boss_rush_card_middle_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_middle_x', this.value)">
+                  <input id="coord-boss_rush_card_middle_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_middle_y', this.value)">
+                  <button onclick="openCoordPicker('boss_rush_card_middle')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the center of the middle Light card">Pick</button>
+                </div>
+              </div>
+              <div style="min-width: 0;">
+                <div class="setting-label">Right · Dark</div>
+                <div class="flex items-center gap-2" style="margin-top: 8px;">
+                  <input id="coord-boss_rush_card_right_x" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_right_x', this.value)">
+                  <input id="coord-boss_rush_card_right_y" class="block-input" style="width: 56px;" type="number" onchange="setMacroCoord('boss_rush_card_right_y', this.value)">
+                  <button onclick="openCoordPicker('boss_rush_card_right')" class="text-xs font-semibold px-2 py-1.5 rounded-lg border flex-shrink-0 settings-action-btn" style="color: var(--slate); border-color: var(--border);" title="Pick the center of the right Dark card">Pick</button>
                 </div>
               </div>
             </div>
