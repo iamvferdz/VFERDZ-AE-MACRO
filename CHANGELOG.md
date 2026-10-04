@@ -2,6 +2,81 @@
 
 All notable changes to Anime Expeditions (VFERDZ-AE-MACRO) are documented here.
 
+## [0.24.3] - 2026-10-04
+
+### New
+- **Progressive Mode**: added task for boss rush mode and map
+- **Event Mode**: added the Infernal Cult Story Event Mode
+- **Assets**: added new map, assets for the new update
+- **Resource in Resource Tab**: added boss rush routes (user must manually record walk path per gates)
+- **Macro Coordinates**: added new boss rush pick card coordinate for the boss rush progressive mode
+
+### Improved
+- Modified little bit on the GUI Task Builder for the new mode
+
+## [0.24.0 - 0.24.2] - 2026-09-26
+
+### New
+- **New Update - Update 3 Endless Hellflame**: added new story mode, new assets, new mode, new folder map
+- **New Story Map**: added flaming monastery map, new assets
+
+### Fixed
+- Fixed: Cant Manually Add New Maps -> Now automatically display/show the new map especially in the resource tab global map
+- Fixed and Modified flaming monastery map due to spawn update/move
+
+## [0.23.0] - 2026-09-11
+
+### New
+- **Added fishing mode**: add new fishhook and unwanted fish assets 
+
+### Fixed
+- **Fixed Target Priority Block**: fix on clicking unit priority orders, added new one and modified
+
+## [0.22.0 - 0.22.2] - 2026-09-10
+
+### New
+- **New Update 2.5 Absolute Dream**: added the new update, new mode, story mode event, new maps
+- **New Mode**: added the new story event mode; Golden Hour and Eclipse Infinite Stage 
+- **New Assets**: eclipsed assets; sacrificed soul & redeemed soul, new mode assets; golden hour & eclipsed infinite story
+- **Eclipse Card Selection**: add macro coordinate for the card selection and detection
+
+### Improved
+- Summer Event Mode & Portal Mode Task
+- Modified the task process, ui, select options and etc
+- Remove unused units
+- Eclipsed Card Selection Process
+
+## [0.21.0 - 0.21.6] - 2026-09-09
+
+### New
+- **Built-in Walk Path**: added new path built-in path for the new map: Crimson Shore, Snowy Castle, Summer Event Mode and Summer Portal
+- **Logo**: replace the old logo
+- **Macro Header Name**: replace macro header name to VFERDZ
+-
+
+### Improved
+- **Ownership**: Repo Transfer Ownership
+- Refactor workflows and update documentation for clarity and accuracy
+- **Modified Files**: update README with new game features and installation instructions
+- **Challenge Image Detection and Function**: fixed the image match
+- **New/Replace Assets**: challenge, daily challenge, wave detect
+- **Wave Detection/Monitor**: fixed to be accurate on detect when to stop
+
+### Fixed
+- Wave Check in Infinite 
+
+## [0.20.0 - 0.20.3] - 2026-09-08
+
+### New 
+- **Macro changes**: replace Logo, rename GUI branding to VFERDZ macro, 
+- **Creams Macro Labels to VFERDZ**: replace the remaining Creams Macro labels in the main dashboard, loading screen, welcome dialog, logs window, and wave monitor.
+- **2 Summer Event Mode**: added event mode and portal mode
+
+### Improved
+- **Modified GUI**: Improve some interface
+- **New Assets**: Added new assets to improve the detection
+- **Modified Files**: readme, docs, user guide
+
 ## [0.19.1] - 2026-08-13
 
 ### Improved
