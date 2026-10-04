@@ -937,7 +937,7 @@ class BlockOps:
                 return None
 
     def _run_prestart_blocks(self, hwnd, stop_event: threading.Event, task: dict, first_repeat: bool = True,
-                               default_walk_paths: dict = None) -> None:
+                               default_walk_paths: dict = None, skip_walk_paths: bool = False) -> None:
         # The task's Macro Operation (Creation > template) is what actually
         # places starter units and flips settings -- this is the piece that
         # was never wired up: the field existed on every Task card, but
@@ -957,9 +957,12 @@ class BlockOps:
 
         macro_name = task.get("macro")
         if not macro_name:
-            self._log("[Macro] No Macro Operation set on this task -- running just the default Auto walk.")
-            self._run_walk_path_block(hwnd, stop_event, task, default_walk_paths or {},
-                                        auto_walk_block, first_repeat)
+            if skip_walk_paths:
+                self._log("[Macro] No Macro Operation set -- no placement blocks to run after the Boss Rush gate route.")
+            else:
+                self._log("[Macro] No Macro Operation set on this task -- running just the default Auto walk.")
+                self._run_walk_path_block(hwnd, stop_event, task, default_walk_paths or {},
+                                            auto_walk_block, first_repeat)
             return
 
         from . import templates as tpl
@@ -969,11 +972,14 @@ class BlockOps:
             self._log(f'[Macro] Template "{macro_name}" is saved in an old format -- '
                        f'open it in Macro Manager and Save again to run its Pre Start blocks.')
             # Its blocks can't run, but the mandatory Auto walk still can.
-            self._run_walk_path_block(hwnd, stop_event, task, default_walk_paths or {},
-                                        auto_walk_block, first_repeat)
+            if not skip_walk_paths:
+                self._run_walk_path_block(hwnd, stop_event, task, default_walk_paths or {},
+                                            auto_walk_block, first_repeat)
             return
         prestart_blocks = blocks.get("prestart") if "prestart" in blocks else blocks.get("before")
         prestart_blocks = self._strip_auto_upgrade_for_expedition(prestart_blocks or [], task)
+        if skip_walk_paths:
+            prestart_blocks = [block for block in prestart_blocks if block.get("type") != "walk_path"]
 
         # Walk Path used to be saved as a separate top-level blocks["walk"]
         # config instead of a real block in this list -- ui/app.js's own
@@ -988,7 +994,7 @@ class BlockOps:
         # always effectively ran before), so a template someone never
         # happens to open in the editor still walks correctly.
         legacy_walk = blocks.get("walk")
-        if not any(b.get("type") == "walk_path" for b in prestart_blocks):
+        if not skip_walk_paths and not any(b.get("type") == "walk_path" for b in prestart_blocks):
             # No walk block at all (a template saved back when the block was
             # removable, or hand-edited) gets the plain synthesized Auto one
             # -- same mandatory-walk rule as the no-macro case above.

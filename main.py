@@ -198,6 +198,9 @@ MACRO_COORD_DEFAULTS = {
     "eclipse_redeemed_card_x": 277, "eclipse_redeemed_card_y": 392,
     "eclipse_sacrificed_card_x": 576, "eclipse_sacrificed_card_y": 392,
     "eclipse_neutral_card_x": 876, "eclipse_neutral_card_y": 392,
+    "boss_rush_card_left_x": 277, "boss_rush_card_left_y": 392,
+    "boss_rush_card_middle_x": 576, "boss_rush_card_middle_y": 392,
+    "boss_rush_card_right_x": 876, "boss_rush_card_right_y": 392,
     "portal_card_x": 460, "portal_card_y": 360,
     "unit_info_reset_x": 3, "unit_info_reset_y": 3,
 }
@@ -871,6 +874,36 @@ class Api:
 
     def get_tasks(self) -> list:
         return cfg.load().get("tasks", [])
+
+    def get_run_tasks(self) -> list:
+        tasks = self.get_tasks()
+        boss_rush_paths = self.get_boss_rush_paths()["paths"]
+        return [
+            {**task, "boss_rush_walk_paths": boss_rush_paths}
+            if task.get("mode") == "boss_rush" else task
+            for task in tasks
+        ]
+
+    @staticmethod
+    def _default_boss_rush_paths() -> dict:
+        return {str(gate): "" for gate in range(1, 7)}
+
+    def get_boss_rush_paths(self) -> dict:
+        saved = cfg.load().get("boss_rush_walk_paths", {})
+        paths = self._default_boss_rush_paths()
+        if isinstance(saved, dict):
+            for gate in paths:
+                paths[gate] = str(saved.get(gate) or "")
+        return {"ok": True, "paths": paths}
+
+    def set_boss_rush_path(self, gate, path_name: str) -> dict:
+        gate = str(gate)
+        if gate not in self._default_boss_rush_paths():
+            return {"ok": False, "reason": "invalid_gate"}
+        paths = self.get_boss_rush_paths()["paths"]
+        paths[gate] = str(path_name or "")
+        cfg.update({"boss_rush_walk_paths": paths})
+        return {"ok": True, "paths": paths}
 
     def get_macro_coords(self) -> dict:
         data = cfg.load()
@@ -2101,7 +2134,7 @@ class Api:
         default_walk_paths = self.get_default_walk_paths()
         webhook_settings = self.get_webhook_settings()
         return self.runner.start(
-            lambda: self.game_hwnd, self.get_tasks, scroll_power, coords, scroll_nudges, debug_screenshots,
+            lambda: self.game_hwnd, self.get_run_tasks, scroll_power, coords, scroll_nudges, debug_screenshots,
             default_walk_paths, webhook_settings,
             expedition_color_buttons=data.get("expedition_color_buttons", True),
             expedition_camera_o_ms=data.get("expedition_camera_o_ms", 100),

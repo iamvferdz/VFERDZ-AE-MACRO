@@ -34,6 +34,7 @@ MAX_PASSES = 3
 STORY_EVENT_IMAGES = {
     "Eclipsed Infinite": "story_eclipsed_infinite",
     "Golden Hour": "story_golden_hour",
+    "Infernal Cult": "story_infernal_cult",
 }
 
 

@@ -66,6 +66,18 @@ def test_fuel_interval_input_converts_hours_to_minutes(tmp_path):
     assert out == [30, 120, 60]
 
 
+def test_boss_rush_record_handler_is_a_top_level_function(tmp_path):
+    out = run_js("""
+        const fuel = extract('toggleRecordFuelPath');
+        const boss = extract('toggleRecordBossRushPath');
+        console.log(JSON.stringify({
+          bossHandlerNestedInFuel: fuel.includes('async function toggleRecordBossRushPath'),
+          bossHandlerExists: boss.includes('startRecordingTarget({ kind: \\'boss_rush\\'')
+        }));
+    """, tmp_path)
+    assert out == {"bossHandlerNestedInFuel": False, "bossHandlerExists": True}
+
+
 def test_fuel_interval_input_stays_editable_in_auto_mode(tmp_path):
     out = run_js("""
         let fuelState = {interval_minutes: 0};
@@ -1165,6 +1177,16 @@ def test_get_started_is_never_disabled():
     modal = html.split('id="onboarding-modal"', 1)[1]
     button = modal[modal.index("closeOnboarding"):]
     assert "disabled" not in button[:button.index("</button>")]
+
+
+def test_boss_rush_one_gate_option_is_disabled():
+    app_js = open(APP_JS, encoding="utf-8").read()
+    style_css = open(os.path.join(os.path.dirname(APP_JS), "style.css"), encoding="utf-8").read()
+    assert "const disabled = disabledOptions.includes(String(o));" in app_js
+    assert "${disabled ? 'disabled' : ''}" in app_js
+    assert "' · Unavailable' : ''" in app_js
+    assert "'Choose 2-6 gates before the boss. One gate is unavailable in this task.', ['1']" in app_js
+    assert "select option:disabled" in style_css
 
 
 def test_both_containers_exist_for_the_renderer_to_fill():

@@ -24,8 +24,10 @@ from datetime import datetime, timezone
 import cv2
 
 from . import camera
+from . import config
 from . import keys
 from . import ocr_windows
+from . import paths
 from . import stage_select
 from . import vision
 from . import wave as wave_module
@@ -929,7 +931,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 # A mid-task failure (a stuck battle, a missed click, ...)
                 # doesn't kill the whole overnight run -- _run_task recovers to
                 # the lobby and retries internally, only returning False when
-                # stop_event actually fired.
+                # stop_event actually fired or a non-retriable configuration
+                # error (such as a missing Boss Rush route) requires stopping.
                 task_ok, task_result = self._run_guarded_phase(
                     f"task {task_index}/{len(tasks)}", hwnd, stop_event,
                     lambda: self._run_task(
@@ -1015,9 +1018,9 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         (see _recover_to_lobby), up to TASK_RECOVERY_ATTEMPTS times, before
         giving up on just this task and letting the run move on to the next
         one -- so one stuck battle doesn't end an unattended overnight run.
-        Returns False only when stop_event actually fired (the whole run
-        should stop); True in every other case, including "gave up on this
-        task after repeated failures".
+        Returns False when stop_event fired or a non-retriable configuration
+        error requires stopping the runner; True in every other case,
+        including "gave up on this task after repeated failures".
         """
         mode = task.get("mode") or "story"
         # The Task Builder exposes the future-proof Event schema, while the
@@ -1033,6 +1036,11 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             else:
                 task["map"] = "Summer"
             mode = "summer"
+        if mode == "boss_rush":
+            boss_rush_state = self._new_boss_rush_state(task)
+            if boss_rush_state is None:
+                self._log("[Boss Rush] Invalid gate count or card preference. Set gates to 1-6 and choose left, middle, or right.")
+                return False
         map_name = task.get("map")
         repeat_total = max(1, int(task.get("repeat") or 1))
         progress_task = dict(task)
@@ -1157,6 +1165,9 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 result = self._play_one_match(hwnd, stop_event, task, default_walk_paths,
                                                 first_repeat=fresh_entry, webhook=webhook)
                 fresh_entry = False
+                if result == "configuration_error":
+                    self._set_status(action="Idle")
+                    return False
                 if result is None:
                     if stop_event.is_set():
                         return False
@@ -1640,6 +1651,26 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 return False
             if self._checkpoint(stop_event):
                 return False
+        elif mode == "boss_rush":
+            reached_boss_rush = False
+            for attempt in range(1, MAP_SELECT_RETRY_ATTEMPTS + 1):
+                if self._checkpoint(stop_event):
+                    return False
+                if attempt > 1:
+                    self._log(f"[Macro] Retrying Boss Rush entry from the lobby "
+                              f"(attempt {attempt}/{MAP_SELECT_RETRY_ATTEMPTS})...")
+                if self._reach_boss_rush_selected(hwnd, stop_event):
+                    reached_boss_rush = True
+                    break
+                if stop_event.is_set():
+                    return False
+            if not reached_boss_rush:
+                self._log(f"[Macro] Couldn't reach Boss Rush after "
+                          f"{MAP_SELECT_RETRY_ATTEMPTS} attempts -- stopping.")
+                return False
+            if self._checkpoint(stop_event):
+                return False
+            self._log('[Macro] Boss Rush is locked to Hard in-game -- no difficulty click needed.')
         else:
             # Lobby -> Play -> Story/Raid -> map search, retried wholesale from
             # the lobby if the map search fails and backing out succeeds (see
@@ -1681,7 +1712,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 # Infinite/Mastery (see TASK_DATA.raid.fixedDifficulty) -- no
                 # difficulty picker exists for it, so no click happens for it.
                 if mode == "raid":
-                    self._log('[Macro] Raid is locked to Hard in-game -- no difficulty click needed.')
+                    self._log(f'[Macro] {mode.replace("_", " ").title()} is locked to Hard in-game -- '
+                              'no difficulty click needed.')
                 elif stage in SPECIAL_STAGES_NO_DIFFICULTY or (
                         mode == "story" and task.get("story_event") not in (None, "", "Normal")):
                     self._log(f'[Macro] "{stage}" is locked to Hard in-game -- no difficulty click needed.')
@@ -1717,6 +1749,9 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             if not self._click_and_verify_gone(hwnd, stop_event, confirm_image, STAGE_SCREEN_TIMEOUT):
                 self._log(f'[Macro] "{confirm_image}" never showed up -- stopping.')
                 return False
+            if mode == "boss_rush":
+                self._log(f"[Boss Rush] Waiting {BOSS_RUSH_TRANSITION_DELAY:.0f}s for the stage confirmation to settle.")
+                self._interruptible_sleep(BOSS_RUSH_TRANSITION_DELAY, stop_event)
         if self._checkpoint(stop_event):
             return False
 
@@ -1734,6 +1769,11 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             if not self._wait_teleport_in(hwnd, stop_event, webhook, task, timeout=MATCHMAKING_TELEPORT_TIMEOUT):
                 return False
         else:
+            if mode == "boss_rush":
+                self._log(f"[Boss Rush] Waiting {BOSS_RUSH_TRANSITION_DELAY:.0f}s before starting the Solo run.")
+                self._interruptible_sleep(BOSS_RUSH_TRANSITION_DELAY, stop_event)
+                if self._checkpoint(stop_event):
+                    return False
             self._log("[Macro] Solo mode -- clicking Start (retrying up to "
                        f"{SOLO_START_RETRY_ATTEMPTS} times if it doesn't teleport).")
             if not self._click_start_and_wait_teleport(hwnd, stop_event, webhook, task):
@@ -1749,19 +1789,30 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         per repeat. first_repeat gates the default walk and any "Once"
         Pre Start block so they only fire on the task's first entry into
         this stage, not on every repeat (see _run_prestart). Returns
-        "win"/"loss", or None on failure/stop."""
+        "win"/"loss", "configuration_error" for a missing Boss Rush setup
+        reference/route, or None on other failure/stop."""
         self._active_task = task
+        boss_rush_state = None
+        if task.get("mode") == "boss_rush":
+            boss_rush_state = self._new_boss_rush_state(task)
+            if boss_rush_state is None:
+                self._log("[Boss Rush] Invalid gate count or card preference. Set gates to 1-6 and choose left, middle, or right.")
+                return None
         if not self._start_game_or_reset_via_settings(hwnd, stop_event, task.get("play_mode")):
             return None
         if self._checkpoint(stop_event):
             return None
 
-        if not self._run_prestart(hwnd, stop_event, task, default_walk_paths, first_repeat):
+        defer_boss_rush_blocks = boss_rush_state is not None
+        if not self._run_prestart(
+            hwnd, stop_event, task, default_walk_paths, first_repeat,
+            run_blocks=not defer_boss_rush_blocks,
+        ):
             return None
         if self._checkpoint(stop_event):
             return None
 
-        self._log("[Macro] Pre Start finished -- starting the round.")
+        self._log("[Macro] Pre Start setup finished -- starting the round.")
         self._set_status(action="Starting the round...")
         if self._checkpoint(stop_event):
             return None
@@ -1862,8 +1913,414 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # (see _click_close_popup_if_found) only ever shows up there.
         watch_close_popup = (task.get("mode") == "raid" and task.get("map") == "Spirit City"
                               and str(task.get("stage")) == "3")
+        if boss_rush_state is not None:
+            self._interruptible_sleep(2.0, stop_event)
+            if self._checkpoint(stop_event):
+                return None
+            self._log("[Boss Rush] Starting the configured Spawn → Gate 1 route.")
+            if not self._run_boss_rush_gate_route(hwnd, stop_event, task, 1, boss_rush_state):
+                return "configuration_error" if boss_rush_state["configuration_error"] else None
+            if self._checkpoint(stop_event):
+                return None
+            if not self._run_boss_rush_gate_setup(hwnd, stop_event, task, 1, boss_rush_state):
+                return "configuration_error" if boss_rush_state["configuration_error"] else None
         return self._wait_for_match_result(hwnd, stop_event, battle_blocks, first_repeat, task.get("macro"),
-                                             task.get("mode"), watch_close_popup, webhook, task)
+                                             task.get("mode"), watch_close_popup, webhook, task, boss_rush_state)
+
+    @staticmethod
+    def _new_boss_rush_state(task: dict):
+        value = task.get("boss_rush_gates", 6)
+        if isinstance(value, bool):
+            return None
+        try:
+            target = int(value)
+        except (TypeError, ValueError):
+            return None
+        if target < 1 or target > 6:
+            return None
+        card = task.get("boss_rush_card", "left")
+        if card not in BOSS_RUSH_CARD_COORDS:
+            return None
+        return {
+            "target": target,
+            "card": card,
+            "cleared": 0,
+            "awaiting_decision": False,
+            "decision_since": 0.0,
+            "card_click_attempts": 0,
+            "card_last_click_at": 0.0,
+            "boss_started": False,
+            "configuration_error": False,
+            "missing_template_logged": set(),
+        }
+
+    def _run_boss_rush_gate_route(self, hwnd, stop_event: threading.Event, task: dict, gate: int,
+                                  state: dict = None) -> bool:
+        route_name = (task.get("boss_rush_walk_paths") or {}).get(str(gate)) or ""
+        if not route_name:
+            self._log(f"[Boss Rush] Gate {gate} has no Spawn → Gate route. Assign it in Resource > Boss Rush Routes.")
+            if state is not None:
+                state["configuration_error"] = True
+            return False
+        events = paths.load_path(route_name).get("events") or []
+        if not events:
+            self._log(f'[Boss Rush] Gate {gate} route "{route_name}" is missing or empty. Record and assign it in Resource > Boss Rush Routes.')
+            if state is not None:
+                state["configuration_error"] = True
+            return False
+        if not self._keyboard or not self._mouse:
+            self._log("[Boss Rush] Keyboard and mouse input are required to replay a gate route and interact with the gate.")
+            if state is not None:
+                state["configuration_error"] = True
+            return False
+        if self._checkpoint(stop_event):
+            return False
+        self._log(f'[Boss Rush] Replaying Spawn → Gate {gate} route "{route_name}" ({len(events)} events).')
+        paths.replay_events(events, self._keyboard, stop_event)
+        if self._checkpoint(stop_event):
+            return False
+        if not wm.activate_window(hwnd):
+            self._log("[Boss Rush] Couldn't confirm game focus before interacting with the gate.")
+        self._keyboard.tap(ord("E"))
+        self._interruptible_sleep(0.5, stop_event)
+        return not self._checkpoint(stop_event)
+
+    def _run_boss_rush_gate_setup(self, hwnd, stop_event: threading.Event, task: dict, gate: int,
+                                  state: dict) -> bool:
+        if gate == 1:
+            self._log(f"[Boss Rush] Gate {gate} route complete -- running Pre Start placement blocks.")
+            self._run_prestart_blocks(
+                hwnd, stop_event, task, first_repeat=True,
+                default_walk_paths={}, skip_walk_paths=True,
+            )
+        else:
+            self._log(f"[Boss Rush] Gate {gate} route complete -- skipping Pre Start blocks.")
+        if self._checkpoint(stop_event):
+            return False
+        return self._click_boss_rush_gate_start(hwnd, stop_event, gate, state)
+
+    def _click_boss_rush_gate_start(self, hwnd, stop_event: threading.Event, gate, state: dict) -> bool:
+        label = f"Gate {gate}" if isinstance(gate, int) else str(gate)
+        self._wait_out_start_game_warning(hwnd, stop_event)
+        if self._checkpoint(stop_event):
+            return False
+        start_name, start_match = self._find_start_game_button(
+            hwnd, stop_event, START_GAME_BUTTON_WAIT_TIMEOUT)
+        if start_match is None:
+            if not stop_event.is_set():
+                self._log(f'[Boss Rush] Start Game was not found after {label} placement; cannot start this gate.')
+                state["configuration_error"] = True
+            return False
+
+        for attempt in range(1, START_GAME_CLICK_RETRY_ATTEMPTS + 1):
+            self._log(
+                f'[Boss Rush] Found Start Game for {label} ({start_name}, '
+                f'score {start_match["score"]:.2f}) -- clicking it (attempt '
+                f'{attempt}/{START_GAME_CLICK_RETRY_ATTEMPTS}).'
+            )
+            if not wm.activate_window(hwnd):
+                self._log(f"[Boss Rush] Couldn't confirm game focus before starting {label}.")
+            self._keyboard.tap(ord("Z"))
+            self._interruptible_sleep(0.1, stop_event)
+            if self._checkpoint(stop_event):
+                return False
+            vision.click_match(self._mouse, hwnd, start_match)
+            self._interruptible_sleep(START_GAME_CLICK_VERIFY_SETTLE, stop_event)
+            if self._checkpoint(stop_event):
+                return False
+            start_name, start_match = self._find_start_game_button(hwnd)
+            if start_match is None:
+                self._log(f"[Boss Rush] {label} started.")
+                return True
+
+        self._log(f"[Boss Rush] Start Game stayed visible after {START_GAME_CLICK_RETRY_ATTEMPTS} "
+                  f"clicks for {label}; stopping to avoid proceeding before it starts.")
+        state["configuration_error"] = True
+        return False
+
+    def _start_boss_rush_boss_setup(self, hwnd, stop_event: threading.Event, task: dict,
+                                    state: dict = None) -> bool:
+        macro_name = task.get("boss_rush_boss_macro")
+        if not macro_name:
+            self._log("[Boss Rush] Boss Setup Macro is not selected. Choose a placement-only macro in the Task settings before running Boss Rush.")
+            if state is not None:
+                state["configuration_error"] = True
+            return False
+        self._interruptible_sleep(2.5, stop_event)
+        if self._checkpoint(stop_event):
+            return False
+        boss_task = {**task, "macro": macro_name}
+        self._log(f'[Boss Rush] Running Boss Setup Macro "{macro_name}" to place units for the boss.')
+        self._active_task = boss_task
+        self._run_prestart_blocks(
+            hwnd, stop_event, boss_task, first_repeat=True,
+            default_walk_paths={}, skip_walk_paths=True,
+        )
+        self._active_task = task
+        if self._checkpoint(stop_event):
+            return False
+        if state is None:
+            self._log("[Boss Rush] Cannot start the boss gate without gate state.")
+            return False
+        return self._click_boss_rush_gate_start(hwnd, stop_event, "Boss Gate", state)
+
+    def _click_boss_rush_card(self, hwnd, stop_event: threading.Event, state: dict) -> bool:
+        if state["card_click_attempts"] >= BOSS_RUSH_CARD_CLICK_ATTEMPTS:
+            self._log(
+                f'[Boss Rush] Could not confirm the "{state["card"]}" card after '
+                f"{BOSS_RUSH_CARD_CLICK_ATTEMPTS} clicks; returning to the lobby."
+            )
+            screenshot = self._save_debug_screenshot_unconditional(
+                hwnd, "boss_rush_card_click_failed")
+            if screenshot:
+                self._log(f"[Boss Rush] Card-selection screenshot: {screenshot}")
+            return False
+        x_key, y_key = BOSS_RUSH_CARD_COORDS[state["card"]]
+        try:
+            ref_x, ref_y = float(self._coords[x_key]), float(self._coords[y_key])
+        except (KeyError, TypeError, ValueError):
+            self._log(f'[Boss Rush] The saved {state["card"]} card coordinate is invalid. '
+                      "Set it with Pick in Settings > Debug > Macro Coordinates.")
+            state["configuration_error"] = True
+            return False
+        if not (0 <= ref_x < config.FIXED_WIN_W and 0 <= ref_y < config.FIXED_WIN_H):
+            self._log(f'[Boss Rush] The saved {state["card"]} card coordinate '
+                      f"({ref_x:g}, {ref_y:g}) is outside the game window. Re-pick it in "
+                      "Settings > Debug > Macro Coordinates.")
+            state["configuration_error"] = True
+            return False
+
+        card_x, card_y = vision.ref_to_screen(hwnd, ref_x, ref_y)
+        if self._checkpoint(stop_event):
+            return False
+        if not wm.activate_window(hwnd):
+            self._log("[Boss Rush] Couldn't confirm game focus before selecting the card.")
+        attempt = state["card_click_attempts"] + 1
+        self._log(
+            f'[Boss Rush] Clicking the configured "{state["card"]}" card at '
+            f"({ref_x:g}, {ref_y:g}) (attempt {attempt}/{BOSS_RUSH_CARD_CLICK_ATTEMPTS})."
+        )
+        self._mouse.click(card_x, card_y)
+        state["card_click_attempts"] = attempt
+        state["card_last_click_at"] = time.monotonic()
+
+        deadline = state["card_last_click_at"] + BOSS_RUSH_CARD_CLICK_VERIFY_TIMEOUT
+        while time.monotonic() < deadline:
+            if self._checkpoint(stop_event):
+                return False
+            try:
+                prompt = vision.find_image(hwnd, "boss_rush_pick_card")
+            except vision.TemplateNotFound as exc:
+                self._log(f"[Boss Rush] {exc}")
+                state["configuration_error"] = True
+                return False
+            if prompt is None:
+                return True
+            self._interruptible_sleep(
+                min(0.25, deadline - time.monotonic()), stop_event)
+        self._log(
+            f"[Boss Rush] Pick Card is still visible after click "
+            f"{attempt}/{BOSS_RUSH_CARD_CLICK_ATTEMPTS}; will verify again before retrying."
+        )
+        return True
+
+    def _wait_for_boss_rush_decision_gone(self, hwnd, image_name: str,
+                                          stop_event: threading.Event, state: dict) -> bool:
+        deadline = time.monotonic() + BOSS_RUSH_DECISION_CLOSE_TIMEOUT
+        while time.monotonic() < deadline:
+            if self._checkpoint(stop_event):
+                return False
+            try:
+                match = vision.find_image(hwnd, image_name)
+                if match is None:
+                    match = vision.find_image(
+                        hwnd, image_name, threshold=BOSS_RUSH_DECISION_FALLBACK_THRESHOLD)
+            except vision.TemplateNotFound as exc:
+                self._log(f"[Boss Rush] {exc}")
+                state["configuration_error"] = True
+                return False
+            if match is None:
+                return True
+            self._interruptible_sleep(0.3, stop_event)
+
+        self._log(
+            f'[Boss Rush] "{image_name}" remained visible after clicking it; '
+            "not starting another gate until the choice is confirmed."
+        )
+        screenshot = self._save_debug_screenshot_unconditional(
+            hwnd, "boss_rush_decision_click_not_confirmed")
+        if screenshot:
+            self._log(f"[Boss Rush] Decision-click screenshot: {screenshot}")
+        return False
+
+    def _retry_boss_rush_card_if_needed(self, hwnd, stop_event: threading.Event,
+                                        state: dict):
+        if time.monotonic() - state["card_last_click_at"] < BOSS_RUSH_CARD_CLICK_RETRY_DELAY:
+            return "handled"
+        if state["card_click_attempts"] >= BOSS_RUSH_CARD_CLICK_ATTEMPTS:
+            self._log(
+                f'[Boss Rush] Could not confirm the "{state["card"]}" card after '
+                f"{BOSS_RUSH_CARD_CLICK_ATTEMPTS} clicks; returning to the lobby."
+            )
+            screenshot = self._save_debug_screenshot_unconditional(
+                hwnd, "boss_rush_card_click_failed")
+            if screenshot:
+                self._log(f"[Boss Rush] Card-selection screenshot: {screenshot}")
+            return "failed"
+        self._log("[Boss Rush] Pick Card is still visible; retrying the configured card click.")
+        if not self._click_boss_rush_card(hwnd, stop_event, state):
+            return "failed"
+        return "handled"
+
+    def _handle_boss_rush_progress(self, hwnd, stop_event: threading.Event, task: dict, state: dict):
+        if state["boss_started"]:
+            return "idle"
+
+        try:
+            card_prompt = vision.find_image(hwnd, "boss_rush_pick_card")
+        except vision.TemplateNotFound as exc:
+            if "boss_rush_pick_card" not in state["missing_template_logged"]:
+                self._log(f"[Boss Rush] {exc} Add an Image Manager reference named boss_rush_pick_card for the Pick Card prompt.")
+                state["missing_template_logged"].add("boss_rush_pick_card")
+            state["configuration_error"] = True
+            return "failed"
+        if card_prompt is not None and not state["awaiting_decision"]:
+            state["card_click_attempts"] = 0
+            state["card_last_click_at"] = 0.0
+            self._log(f'[Boss Rush] Pick Card found; selecting the configured "{state["card"]}" card.')
+            if not self._click_boss_rush_card(hwnd, stop_event, state):
+                return "failed"
+            state["cleared"] += 1
+            state["awaiting_decision"] = True
+            state["decision_since"] = time.time()
+            return "handled"
+
+        if not state["awaiting_decision"]:
+            return "idle"
+
+        cleared = state["cleared"]
+        target = state["target"]
+        if cleared == 1 and cleared < target:
+            if card_prompt is not None:
+                return self._retry_boss_rush_card_if_needed(hwnd, stop_event, state)
+            next_gate = cleared + 1
+            self._log(
+                f"[Boss Rush] Gate 1 card selected; the game automatically returns to "
+                f"the gates map. Preparing Gate {next_gate} without waiting for Continue."
+            )
+            self._interruptible_sleep(1.5, stop_event)
+            if self._checkpoint(stop_event):
+                return "failed"
+            if not self._run_boss_rush_gate_route(hwnd, stop_event, task, next_gate, state):
+                return "failed"
+            if not self._run_boss_rush_gate_setup(hwnd, stop_event, task, next_gate, state):
+                return "failed"
+            state["awaiting_decision"] = False
+            return "handled"
+
+        action = "continue" if cleared < target or (cleared == 6 and target == 6) else "fight_boss"
+        image_name = f"boss_rush_{action}"
+        try:
+            action_match = vision.find_image(hwnd, image_name)
+        except vision.TemplateNotFound as exc:
+            if image_name not in state["missing_template_logged"]:
+                self._log(f"[Boss Rush] {exc} Add an Image Manager reference named {image_name} for this decision.")
+                state["missing_template_logged"].add(image_name)
+            state["configuration_error"] = True
+            return "failed"
+        elapsed = time.time() - state["decision_since"]
+        if action_match is None and elapsed >= BOSS_RUSH_DECISION_FALLBACK_DELAY:
+            try:
+                action_match = vision.find_image(
+                    hwnd, image_name, threshold=BOSS_RUSH_DECISION_FALLBACK_THRESHOLD)
+            except vision.TemplateNotFound as exc:
+                if image_name not in state["missing_template_logged"]:
+                    self._log(f"[Boss Rush] {exc} Add an Image Manager reference named {image_name} for this decision.")
+                    state["missing_template_logged"].add(image_name)
+                state["configuration_error"] = True
+                return "failed"
+            if action_match is not None:
+                self._log(
+                    f'[Boss Rush] Matched "{image_name}" with the transition fallback '
+                    f"(score {action_match['score']:.2f})."
+                )
+        if action_match is None and card_prompt is not None:
+            return self._retry_boss_rush_card_if_needed(hwnd, stop_event, state)
+        if action_match is not None:
+            max_click_attempts = (
+                BOSS_RUSH_CONTINUE_CLICK_ATTEMPTS if action == "continue" else 1
+            )
+            for attempt in range(1, max_click_attempts + 1):
+                if attempt == 1:
+                    self._log(f'[Boss Rush] Selecting "{action.replace("_", " ").title()}" after gate {cleared}.')
+                else:
+                    self._log(
+                        f'[Boss Rush] Retrying "{action.replace("_", " ").title()}" click '
+                        f"({attempt}/{max_click_attempts})."
+                    )
+                if not wm.activate_window(hwnd):
+                    self._log("[Boss Rush] Couldn't confirm game focus before selecting the gate decision.")
+                vision.click_match(self._mouse, hwnd, action_match)
+                if self._wait_for_boss_rush_decision_gone(hwnd, image_name, stop_event, state):
+                    break
+                if stop_event.is_set():
+                    return "failed"
+                if attempt == max_click_attempts:
+                    return "failed"
+
+                self._interruptible_sleep(0.5, stop_event)
+                if self._checkpoint(stop_event):
+                    return "failed"
+                try:
+                    action_match = vision.find_image(hwnd, image_name)
+                    if action_match is None:
+                        action_match = vision.find_image(
+                            hwnd, image_name,
+                            threshold=BOSS_RUSH_DECISION_FALLBACK_THRESHOLD)
+                except vision.TemplateNotFound as exc:
+                    self._log(f"[Boss Rush] {exc}")
+                    state["configuration_error"] = True
+                    return "failed"
+                if action_match is None:
+                    self._log(
+                        f'[Boss Rush] "{image_name}" disappeared after the click; '
+                        "continuing with the gate transition."
+                    )
+                    break
+            state["awaiting_decision"] = False
+            if action == "continue":
+                if cleared == 6:
+                    if not self._start_boss_rush_boss_setup(hwnd, stop_event, task, state):
+                        return "failed"
+                    state["boss_started"] = True
+                    return "handled"
+                next_gate = cleared + 1
+                self._interruptible_sleep(1.5, stop_event)
+                if self._checkpoint(stop_event):
+                    return "failed"
+                if not self._run_boss_rush_gate_route(hwnd, stop_event, task, next_gate, state):
+                    return "failed"
+                if not self._run_boss_rush_gate_setup(hwnd, stop_event, task, next_gate, state):
+                    return "failed"
+            else:
+                if not self._start_boss_rush_boss_setup(hwnd, stop_event, task, state):
+                    return "failed"
+                state["boss_started"] = True
+            return "handled"
+
+        if elapsed >= BOSS_RUSH_DECISION_TIMEOUT:
+            self._log(
+                f'[Boss Rush] The "{image_name}" prompt was not detected after '
+                f"{BOSS_RUSH_DECISION_TIMEOUT:.0f}s. Check the Image Manager crop and its "
+                "match sensitivity; stopping this Boss Rush task without returning to the lobby."
+            )
+            screenshot = self._save_debug_screenshot_unconditional(
+                hwnd, "boss_rush_decision_not_found")
+            if screenshot:
+                self._log(f"[Boss Rush] Decision-screen screenshot: {screenshot}")
+            state["configuration_error"] = True
+            return "failed"
+        return "handled"
 
 
     @staticmethod
@@ -1973,9 +2430,14 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
 
     def _wait_for_match_result(self, hwnd, stop_event: threading.Event, battle_blocks: list = None,
                                  first_repeat: bool = True, macro_name: str = None, mode: str = None,
-                                 watch_close_popup: bool = False, webhook: dict = None, task: dict = None) -> str:
-        self._log("[Macro] Battle in progress -- watching for Victory/Defeat...")
-        self._set_status(action="Battle in progress...")
+                                 watch_close_popup: bool = False, webhook: dict = None, task: dict = None,
+                                 boss_rush_state: dict = None) -> str:
+        boss_rush_watch_logged = False
+        if boss_rush_state is None:
+            self._log("[Macro] Battle in progress -- watching for Victory/Defeat...")
+            self._set_status(action="Battle in progress...")
+        else:
+            self._set_status(action="Boss Rush gates in progress...")
         battle_blocks = battle_blocks or []
         infinite_wave_limit = self._infinite_wave_limit(task)
         infinite_wave_state = {}
@@ -1998,6 +2460,18 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         while deadline is None or time.time() < deadline:
             if self._checkpoint(stop_event):
                 return None
+
+            if boss_rush_state is not None:
+                boss_result = self._handle_boss_rush_progress(hwnd, stop_event, task, boss_rush_state)
+                if boss_result == "failed":
+                    return "configuration_error" if boss_rush_state["configuration_error"] else None
+                if boss_rush_state["boss_started"] and not boss_rush_watch_logged:
+                    self._log("[Macro] Boss battle in progress -- watching for Victory/Defeat...")
+                    self._set_status(action="Boss battle in progress...")
+                    boss_rush_watch_logged = True
+                if boss_result == "handled":
+                    self._interruptible_sleep(MATCH_RESULT_POLL_INTERVAL, stop_event)
+                    continue
 
             # Eclipse Infinite presents the Pick Card modal repeatedly during
             # the battle (every five waves). Check it on every live poll so
@@ -2101,7 +2575,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             # Once portal cards were displayed, Play is allowed to remain
             # visible behind the result overlay and must not cause a lobby
             # re-entry. The only valid next transition is Select Portal.
-            if not summer_portal_card_state["selected"]:
+            if (not summer_portal_card_state["selected"]
+                    and (boss_rush_state is None or boss_rush_state["boss_started"])):
                 try:
                     lobby_match = vision.find_image(hwnd, "nav_play")
                 except vision.TemplateNotFound:
@@ -2162,22 +2637,23 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 self._interruptible_sleep(MATCH_RESULT_POLL_INTERVAL, stop_event)
                 continue
 
-            try:
-                victory_match = vision.find_image(hwnd, "victory")
-            except vision.TemplateNotFound as exc:
-                self._log(f"[Macro] {exc}")
-                return None
-            if victory_match is not None:
-                self._log(f"[Macro] Victory! (score {victory_match['score']:.2f})")
-                return "win"
-            try:
-                defeat_match = vision.find_image(hwnd, "defeat")
-            except vision.TemplateNotFound as exc:
-                self._log(f"[Macro] {exc}")
-                return None
-            if defeat_match is not None:
-                self._log(f"[Macro] Defeat. (score {defeat_match['score']:.2f})")
-                return "loss"
+            if boss_rush_state is None or boss_rush_state["boss_started"]:
+                try:
+                    victory_match = vision.find_image(hwnd, "victory")
+                except vision.TemplateNotFound as exc:
+                    self._log(f"[Macro] {exc}")
+                    return None
+                if victory_match is not None:
+                    self._log(f"[Macro] Victory! (score {victory_match['score']:.2f})")
+                    return "win"
+                try:
+                    defeat_match = vision.find_image(hwnd, "defeat")
+                except vision.TemplateNotFound as exc:
+                    self._log(f"[Macro] {exc}")
+                    return None
+                if defeat_match is not None:
+                    self._log(f"[Macro] Defeat. (score {defeat_match['score']:.2f})")
+                    return "loss"
             time.sleep(MATCH_RESULT_POLL_INTERVAL)
         self._log(f'[Macro] Neither "victory" nor "defeat" matched within {MATCH_RESULT_TIMEOUT / 60:.0f} min. '
                    f'If the result screen was actually showing, its reference image isn\'t matching your '
@@ -2762,7 +3238,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             self._log(f"[Macro] Webhook send failed: {send_result['reason']}")
 
     def _run_prestart(self, hwnd, stop_event: threading.Event, task: dict, default_walk_paths: dict,
-                        first_repeat: bool = True) -> bool:
+                        first_repeat: bool = True, run_blocks: bool = True) -> bool:
         # Camera setup runs ONCE per fresh entry into a stage (same
         # first_repeat gate as Team Loadout and the Walk Path block below)
         # -- it used to re-run on every repeat as a "per-match reset", but
@@ -2836,6 +3312,10 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             self._log("[Macro] Repeat of the same stage -- skipping Team Loadout (already applied on entry).")
         if self._checkpoint(stop_event):
             return False
+
+        if not run_blocks:
+            self._log("[Boss Rush] Deferring Pre Start blocks until after Start Game and the gate route.")
+            return True
 
         # Walk Path used to be a fixed step here, always running before any
         # of the template's own blocks and never reorderable -- now it's a
@@ -3519,6 +3999,9 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
                 self._set_status(action="Clicking Start...")
                 vision.click_match(self._mouse, hwnd, start_match)
                 clicked = True
+                if task and task.get("mode") == "boss_rush":
+                    self._log(f"[Boss Rush] Waiting {BOSS_RUSH_TRANSITION_DELAY:.0f}s after Start.")
+                    self._interruptible_sleep(BOSS_RUSH_TRANSITION_DELAY, stop_event)
             elif not clicked:
                 # Never managed to click it even once, and it's already
                 # gone -- this is the wrong screen entirely, not a slow
@@ -3972,7 +4455,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # button isn't at the calibrated Story/Raid position (matchmaking_
         # region_*) -- so it's searched full-window, same as Expedition/
         # Challenge, rather than boxed to a region it may not land in.
-        region = None if mode in ("expedition", "challenge", "event", "summer") or story_event else (
+        region = None if mode in ("expedition", "challenge", "event", "summer", "boss_rush") or story_event else (
             coords["matchmaking_region_x"], coords["matchmaking_region_y"],
             coords["matchmaking_region_w"], coords["matchmaking_region_h"],
         )
@@ -4334,6 +4817,72 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
 
         self._spam_back_until_gone(hwnd, stop_event)
         return False
+
+    def _reach_boss_rush_selected(self, hwnd, stop_event: threading.Event) -> bool:
+        """Lobby -> Play -> Boss Rush -> its single current map, District 7."""
+        try:
+            already_selected = vision.find_image(hwnd, "nav_select_stage") is not None
+        except vision.TemplateNotFound as exc:
+            self._log(f"[Macro] {exc}")
+            return False
+        if already_selected:
+            self._log("[Macro] District 7 is already selected.")
+            return not self._checkpoint(stop_event)
+
+        try:
+            already_open = vision.find_image(hwnd, "nav_back") is not None
+        except vision.TemplateNotFound as exc:
+            self._log(f"[Macro] {exc}")
+            return False
+        if already_open:
+            self._log("[Macro] Already on the gamemode menu -- skipping the lobby and Play.")
+        else:
+            if not self._ensure_lobby(hwnd, stop_event):
+                return False
+            if self._checkpoint(stop_event):
+                return False
+            if not self._click_play(hwnd, stop_event):
+                return False
+            if self._checkpoint(stop_event):
+                return False
+
+        if not self._click_gamemode(hwnd, stop_event, "boss_rush", wait_for_menu=not already_open):
+            self._spam_back_until_gone(hwnd, stop_event)
+            return False
+        self._set_status(action="Selecting District 7...")
+        try:
+            map_match = vision.wait_for_image(
+                hwnd, "District 7", timeout=STAGE_SCREEN_TIMEOUT, stop_event=stop_event)
+        except vision.TemplateNotFound as exc:
+            self._log(f"[Macro] Can't confirm the Boss Rush map: {exc}")
+            self._spam_back_until_gone(hwnd, stop_event)
+            return False
+        if map_match is None:
+            if not stop_event.is_set():
+                self._log('[Macro] "District 7" did not appear after opening Boss Rush.')
+            self._spam_back_until_gone(hwnd, stop_event)
+            return False
+        debug_path = self._debug_save(hwnd, "District 7", map_match)
+        suffix = f" Debug: {debug_path}" if debug_path else ""
+        self._log(f'[Macro] Found District 7 (score {map_match["score"]:.2f}) -- selecting it.{suffix}')
+        vision.click_match(self._mouse, hwnd, map_match)
+        self._log(f"[Boss Rush] Waiting {BOSS_RUSH_TRANSITION_DELAY:.0f}s for District 7 to open.")
+        self._interruptible_sleep(BOSS_RUSH_TRANSITION_DELAY, stop_event)
+        if self._checkpoint(stop_event):
+            return False
+        try:
+            stage_match = vision.wait_for_image(
+                hwnd, "nav_select_stage", timeout=STAGE_SCREEN_TIMEOUT, stop_event=stop_event)
+        except vision.TemplateNotFound as exc:
+            self._log(f"[Macro] Can't confirm the District 7 selection: {exc}")
+            self._spam_back_until_gone(hwnd, stop_event)
+            return False
+        if stage_match is None:
+            if not stop_event.is_set():
+                self._log('[Macro] "Select Stage" did not appear after selecting District 7.')
+            self._spam_back_until_gone(hwnd, stop_event)
+            return False
+        return not self._checkpoint(stop_event)
 
     def _reach_summer_selection(self, hwnd, stop_event: threading.Event, task: dict,
                                 scroll_power: int = None, scroll_nudges: int = None) -> bool:
@@ -4817,6 +5366,26 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
 
         if not self._dismiss_party_overlay(hwnd, stop_event):
             return False
+
+        if mode == "boss_rush":
+            self._log("[Macro] Menu open -- searching for Boss Rush...")
+            self._set_status(action="Clicking Boss Rush...")
+            match, name = self._find_gamemode_card(hwnd, stop_event, ("boss_rush",), "Boss Rush")
+            if match is None:
+                if not stop_event.is_set():
+                    self._log(f'[Macro] "boss_rush" not found within {GAMEMODE_CLICK_TIMEOUT:.0f}s -- '
+                              "the Boss Rush card never showed up, stopping.")
+                return False
+            debug_path = self._debug_save(hwnd, name, match)
+            suffix = f" Debug: {debug_path}" if debug_path else ""
+            self._log(f"[Macro] Found Boss Rush (score {match['score']:.2f}) -- clicking it.{suffix}")
+            clicked = self._click_gamemode_target(
+                hwnd, stop_event, "Boss Rush", lambda: vision.click_match(self._mouse, hwnd, match))
+            if not clicked or self._checkpoint(stop_event):
+                return False
+            self._log(f"[Boss Rush] Waiting {BOSS_RUSH_TRANSITION_DELAY:.0f}s for the map list to load.")
+            self._interruptible_sleep(BOSS_RUSH_TRANSITION_DELAY, stop_event)
+            return not self._checkpoint(stop_event)
 
         if mode == "expedition":
             self._log("[Macro] Menu open -- searching for Expedition...")

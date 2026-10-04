@@ -1366,6 +1366,9 @@ select option, select optgroup {
   background: var(--bg-card);
   color: var(--text-dim);
 }
+select option:disabled {
+  color: var(--text-muted);
+}
 
 /* ---- Custom hover tooltips ----
    The native `title` attribute doesn't reliably show inside pywebview's
