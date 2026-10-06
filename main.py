@@ -234,7 +234,7 @@ BOUNTY_DAILY_TOTAL = 10
 BOUNTY_RESET_SCHEDULE = CHALLENGE_RESET_SCHEDULE
 
 
-def _global_story_map_names() -> list:
+def _story_map_names() -> list:
     from core import maps
     return sorted(set(CHALLENGE_STORY_MAPS) | set(maps.list_story_maps()), key=str.casefold)
 
@@ -1010,7 +1010,7 @@ class Api:
             # since that's what needs to follow the map around as it
             # rotates through slots.
             "stages": {slot: {"enabled": True, "count": 0, "last_played_at": 0} for slot in CHALLENGE_STAGE_SLOTS},
-            "maps": {m: {"macro": ""} for m in CHALLENGE_STORY_MAPS},
+            "maps": {m: {"macro": ""} for m in _story_map_names()},
             "last_reset_date": _current_challenge_reset_period(),
             "reset_schedule": CHALLENGE_RESET_SCHEDULE,
         }
@@ -1059,7 +1059,7 @@ class Api:
             merged_stages[slot]["ready"] = merged_stages[slot]["last_played_at"] < window_start
         merged["stages"] = merged_stages
         merged_maps = {}
-        for m in CHALLENGE_STORY_MAPS:
+        for m in _story_map_names():
             saved_map = (saved.get("maps") or {}).get(m) or {}
             merged_maps[m] = {"macro": saved_map.get("macro") or ""}
         merged["maps"] = merged_maps
@@ -1223,7 +1223,7 @@ class Api:
         return {"ok": True}
 
     def set_challenge_map_macro(self, map_name: str, macro: str) -> dict:
-        if map_name not in CHALLENGE_STORY_MAPS:
+        if map_name not in _story_map_names():
             return {"ok": False, "reason": "bad_map"}
         challenge = self.get_challenge_settings()
         challenge["maps"][map_name]["macro"] = macro or ""
@@ -1301,11 +1301,11 @@ class Api:
 
     @staticmethod
     def _challenge_macro_setup(settings: dict) -> dict:
-        return Api._story_macro_setup(settings, CHALLENGE_STORY_MAPS)
+        return Api._story_macro_setup(settings, _story_map_names())
 
     def get_global_story_settings(self) -> dict:
         saved = cfg.load().get("global_story") or {}
-        map_names = _global_story_map_names()
+        map_names = _story_map_names()
         maps = {
             name: {"macro": ((saved.get("maps") or {}).get(name) or {}).get("macro") or ""}
             for name in map_names
@@ -1315,7 +1315,7 @@ class Api:
         return result
 
     def set_global_story_map_macro(self, map_name: str, macro: str) -> dict:
-        map_names = _global_story_map_names()
+        map_names = _story_map_names()
         if map_name not in map_names:
             return {"ok": False, "reason": "bad_map"}
         settings = self.get_global_story_settings()

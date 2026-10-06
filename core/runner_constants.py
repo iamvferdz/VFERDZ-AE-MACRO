@@ -791,6 +791,9 @@ TEAM_LOADOUT_OPEN_SETTLE = 0.5
 # loss, confirmed from a real report) -- retried instead, up to this many
 # attempts, before actually giving up and failing Pre Start over it.
 TEAM_LOADOUT_CONFIRM_RETRY_ATTEMPTS = 3
+# The equipment choice can render after the Confirm click; recheck it before
+# giving up and forcing the whole task back through lobby setup.
+TEAM_LOADOUT_EQUIPMENT_RETRY_ATTEMPTS = 3
 # Clicking a Loadout row makes the Confirm button SLIDE UP into place, and
 # it's still animating for a beat afterward -- searching for "confirm"
 # immediately finds it mid-slide, so the click lands where the button WAS a

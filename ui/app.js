@@ -3226,11 +3226,6 @@ async function refreshTaskQueue() {
 // while Macro Operation assignment is tracked per MAP, since that's what
 // needs to follow the map around as it rotates through slots.
 const CHALLENGE_STAGE_SLOTS = ['1', '2', '3'];
-// Mirrors main.py's CHALLENGE_STORY_MAPS -- keep in sync if Story's map
-// list (TASK_DATA.story.maps) ever changes. This list is what renders the
-// Story Map Setup rows, so a map missing here cannot be assigned a Macro
-// Operation at all; tests/test_challenge_maps.py fails when it drifts.
-const CHALLENGE_STORY_MAPS = ['School Grounds', 'Rose Kingdom', 'Fairy King Forest', "King's Tomb", 'Flower Forest', 'East Town', 'Crimson Shore'];
 let challengeState = null;
 let globalStoryState = null;
 
@@ -3396,7 +3391,7 @@ function renderChallengeScreen() {
   if (!s) { mapList.innerHTML = '<div class="rh-empty">Couldn\'t load Challenge settings.</div>'; return; }
   const macroOpts = (current) => `<option value="">No Macro</option>` +
     taskTemplates.map(n => `<option value="${escapeHtml(n)}" ${n === current ? 'selected' : ''}>&#9654; ${escapeHtml(n)}</option>`).join('');
-  mapList.innerHTML = CHALLENGE_STORY_MAPS.map(map => {
+  mapList.innerHTML = Object.keys(s.maps || {}).map(map => {
     const info = s.maps[map] || { macro: '' };
     return `
       <div class="task-card" style="--tqc: var(--lilac); cursor: default;">
@@ -3541,7 +3536,7 @@ function renderBountyScreen() {
     taskTemplates.map(name =>
       `<option value="${escapeHtml(name)}" ${name === current ? 'selected' : ''}>&#9654; ${escapeHtml(name)}</option>`
     ).join('');
-  list.innerHTML = CHALLENGE_STORY_MAPS.map(map => {
+  list.innerHTML = Object.keys(s.maps || {}).map(map => {
     const info = s.maps[map] || { macro: '' };
     return `
       <div class="task-card" style="--tqc: var(--lilac); cursor: default;">

@@ -21,6 +21,46 @@ from .runner_constants import *  # noqa: F401,F403 -- the shared constants names
 
 
 class ChallengeOps:
+    @staticmethod
+    def _challenge_map_names():
+        from . import maps
+        return sorted(
+            set(CHALLENGE_STORY_MAPS) | set(maps.list_story_maps()),
+            key=str.casefold,
+        )
+
+    @staticmethod
+    def _challenge_map_ocr_aliases(map_names):
+        aliases = {
+            name: alias for name, alias in CHALLENGE_MAP_OCR_ALIASES.items()
+            if name in map_names
+        }
+        token_sets = {
+            name: set(re.findall(r"[a-z]+", name.lower()))
+            for name in map_names
+        }
+        token_counts = {}
+        for tokens in token_sets.values():
+            for token in tokens:
+                token_counts[token] = token_counts.get(token, 0) + 1
+
+        used_aliases = set(aliases.values())
+        generic_words = CHALLENGE_MAP_OCR_STOPWORDS | {"map", "story"}
+        for name in map_names:
+            if name in aliases:
+                continue
+            unique_words = [
+                token for token in token_sets[name]
+                if token_counts[token] == 1
+                and token not in generic_words
+                and token not in used_aliases
+            ]
+            if unique_words:
+                alias = max(unique_words, key=lambda token: (len(token), token))
+                aliases[name] = alias
+                used_aliases.add(alias)
+        return aliases
+
     def _detect_current_challenge_map(self, hwnd) -> str:
         """Regular Challenge is Story's own flow with the game picking a
         random one of CHALLENGE_STORY_MAPS for you -- this is the "which one
@@ -29,8 +69,9 @@ class ChallengeOps:
         map-CARD search) in turn. Returns the matched map name, or None if
         none of them were found (not yet on a recognizable Challenge screen,
         or the wrong screen entirely)."""
+        map_names = ChallengeOps._challenge_map_names()
         try:
-            match, map_name = vision.find_image_any(hwnd, CHALLENGE_STORY_MAPS)
+            match, map_name = vision.find_image_any(hwnd, map_names)
         except vision.TemplateNotFound:
             return None
         if match is not None:
@@ -71,7 +112,8 @@ class ChallengeOps:
         if frame is None:
             return None
 
-        aliases = CHALLENGE_MAP_OCR_ALIASES
+        aliases = ChallengeOps._challenge_map_ocr_aliases(
+            ChallengeOps._challenge_map_names())
 
         try:
             pytesseract = ocr.get_pytesseract()

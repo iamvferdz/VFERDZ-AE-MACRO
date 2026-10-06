@@ -23,11 +23,14 @@ tab captures and saves one for you) instead of replacing the shipped one
 
 Map folders are scanned again when the Task or Resources screen opens.
 New Story maps can be added either as a map-name crop folder here or as
-an image under Assets/map/Story; they are added to the Task map picker and
-Global Story Map Setup automatically. A new folder here is treated as a
-Story map unless another Assets/map category identifies the same name (for
-example, add a Raid map image under Assets/map/Raid to keep it out of the
-Story list). Raid map names are also discovered from Assets/map/Raid.
+an image under Assets/map/Story; they are added to the Task map picker,
+Auto Challenge, and Global Story Map Setup automatically. Auto Challenge
+also needs a map-name reference crop under Assets/ui/<Map Name>/ (or a
+loose Assets/ui/<Map Name>.png) to visually recognize that map. A new
+folder here is treated as a Story map unless another Assets/map category
+identifies the same name (for example, add a Raid map image under
+Assets/map/Raid to keep it out of the Story list). Raid map names are also
+discovered from Assets/map/Raid.
 
 Crop tightly around just the map's NAME LABEL (the bold white text under
 the thumbnail art, e.g. "School Grounds") -- not the thumbnail art itself
