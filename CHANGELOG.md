@@ -2,6 +2,12 @@
 
 All notable changes to Anime Expeditions (VFERDZ-AE-MACRO) are documented here.
 
+## [0.24.4] - 2026-10-06
+
+### Fixed
+- Challenge Story Maps in Resource Tab are now real-time update when adding a new map
+- Enhanced the detection mechanism for the "Include" button to retry detection and clicking based on the configured threshold in the Image Manager, rather than using a fixed value.
+
 ## [0.24.3] - 2026-10-04
 
 ### New
