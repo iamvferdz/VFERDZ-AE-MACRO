@@ -1,20 +1,4 @@
-"""Guards for the Story-map list that Auto Challenge and Auto Bounty share.
-
-The same list of Story maps is written out in four places: main.py (the
-settings/API layer), core/runner_constants.py (what the runner recognizes
-after teleporting in), ui/app.js's CHALLENGE_STORY_MAPS (what renders the
-Story Map Setup rows), and ui/app.js's TASK_DATA.story.maps (the Task
-Builder's own picker, which is the closest thing the repo has to "the maps
-the game actually has").
-
-Dropping a new map into only some of them fails quietly and in a way that is
-hard to trace back: Story Map Setup shows no row for it, so setup_ready goes
-green while that destination has no macro assigned, and Auto Challenge is
-allowed to start -- then a Challenge that rotates onto it enters a battle
-with no Pre Start blocks and no units. Exactly that happened when East Town
-shipped in 0.19.0. These tests make the next map fail loudly instead.
-"""
-import re
+"""Guards for the Story-map lists used by challenge and bounty automation."""
 from pathlib import Path
 
 import main
@@ -25,41 +9,15 @@ REPO = Path(__file__).resolve().parent.parent
 APP_JS = REPO / "ui" / "app.js"
 
 
-def _js_list(name):
-    """Pull a top-level `const NAME = [...]` string list out of ui/app.js."""
+def test_resource_map_setup_uses_backend_map_settings():
+    """Challenge and Bounty rows follow the maps returned by their APIs."""
     src = APP_JS.read_text(encoding="utf-8")
-    match = re.search(rf"const {name}\s*=\s*\[(.*?)\];", src, re.S)
-    assert match, f"couldn't find {name} in ui/app.js"
-    return [a or b for a, b in re.findall(r"'([^']*)'|\"([^\"]*)\"", match.group(1))]
-
-
-def _js_task_data_story_maps():
-    src = APP_JS.read_text(encoding="utf-8")
-    match = re.search(r"story:\s*\{.*?maps:\s*\[(.*?)\]", src, re.S)
-    assert match, "couldn't find TASK_DATA.story.maps in ui/app.js"
-    return [a or b for a, b in re.findall(r"'([^']*)'|\"([^\"]*)\"", match.group(1))]
-
-
-def test_backend_challenge_map_lists_match():
-    """main.py serves the settings; runner_constants drives the post-teleport
-    "which map did it land on" search. A map in one but not the other is either
-    a map you can configure but the runner cannot recognize, or one it
-    recognizes with nowhere to have configured a macro."""
-    assert main.CHALLENGE_STORY_MAPS == rc.CHALLENGE_STORY_MAPS
-
-
-def test_story_map_setup_ui_offers_every_backend_map():
-    """CHALLENGE_STORY_MAPS in ui/app.js renders the Story Map Setup rows and
-    is also validated server-side by set_challenge_map_macro, so a map only the
-    backend knows about can never be given a Macro Operation through the UI."""
-    assert _js_list("CHALLENGE_STORY_MAPS") == main.CHALLENGE_STORY_MAPS
-
-
-def test_challenge_maps_cover_every_story_map_the_task_builder_offers():
-    """TASK_DATA.story.maps is the map list the game actually has. Regular
-    Challenge can rotate onto any of them, so the Challenge list has to keep up
-    with it -- this is the check that East Town needed and did not have."""
-    assert sorted(_js_task_data_story_maps()) == sorted(main.CHALLENGE_STORY_MAPS)
+    challenge_render = src.split("function renderChallengeScreen()", 1)[1].split(
+        "async function toggleChallengeEnabled", 1)[0]
+    assert "Object.keys(s.maps || {}).map(map =>" in challenge_render
+    bounty_render = src.split("function renderBountyScreen()", 1)[1].split(
+        "async function toggleBountyEnabled", 1)[0]
+    assert "Object.keys(s.maps || {}).map(map =>" in bounty_render
 
 
 def test_bounty_shares_the_same_story_map_list():
@@ -70,7 +28,7 @@ def test_bounty_shares_the_same_story_map_list():
     assert sorted(bounty.STORY_MAPS) == sorted(main.BOUNTY_STORY_MAPS)
 
 
-def test_every_challenge_map_has_a_reference_crop():
+def test_every_default_challenge_map_has_a_reference_crop():
     """_detect_current_challenge_map searches Assets/ui/<map> for each name.
     A name with no crop raises TemplateNotFound and drops the whole search to
     the OCR fallback, so the map is effectively unrecognizable."""

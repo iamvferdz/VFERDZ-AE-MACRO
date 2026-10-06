@@ -40,6 +40,8 @@ def _patch_settings(monkeypatch, state):
     monkeypatch.setattr(main.cfg, "update", lambda patch: state.update(patch))
     monkeypatch.setattr(
         main, "_current_challenge_reset_period", lambda now=None: "2026-07-29")
+    monkeypatch.setattr(
+        main, "_story_map_names", lambda: list(main.CHALLENGE_STORY_MAPS))
 
 
 def test_challenge_settings_report_incomplete_story_map_setup(monkeypatch):

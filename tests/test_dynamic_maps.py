@@ -59,6 +59,28 @@ def test_global_story_settings_and_assignment_include_new_story_map(tmp_path, mo
     assert state["global_story"]["maps"]["New Story"]["macro"] == "New Story Farm"
 
 
+def test_challenge_settings_and_assignment_include_new_story_map(tmp_path, monkeypatch):
+    _make_asset_dirs(tmp_path, monkeypatch)
+    (tmp_path / "Assets" / "map" / "Story" / "New Story.png").write_bytes(b"story")
+    state = {"challenge": {}}
+    monkeypatch.setattr(main.cfg, "load", lambda: state)
+    monkeypatch.setattr(main.cfg, "update", lambda patch: state.update(patch))
+    monkeypatch.setattr(main, "_current_challenge_reset_period", lambda now=None: "2026-07-29")
+    monkeypatch.setattr(main.tpl, "template_exists", lambda _name: True)
+    monkeypatch.setattr(
+        main.tpl, "load_template",
+        lambda _name: {"blocks": {"prestart": [], "battle": []}})
+    api = main.Api.__new__(main.Api)
+
+    settings = api.get_challenge_settings()
+    saved = api.set_challenge_map_macro("New Story", "New Story Farm")
+
+    assert "New Story" in settings["maps"]
+    assert "New Story" in settings["missing_maps"]
+    assert saved["ok"] is True
+    assert state["challenge"]["maps"]["New Story"]["macro"] == "New Story Farm"
+
+
 def test_map_picker_loads_uppercase_image_extensions(tmp_path, monkeypatch):
     _make_asset_dirs(tmp_path, monkeypatch)
     image_path = tmp_path / "Assets" / "map" / "Story" / "New Story.PNG"

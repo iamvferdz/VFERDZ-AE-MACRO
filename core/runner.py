@@ -3605,21 +3605,43 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         # starts the match with a different loadout than the template asked
         # for.  Keep a screenshot of the unread screen so future game-art
         # changes can be diagnosed from the actual failed frame.
-        try:
-            equip_match = vision.wait_for_image(hwnd, equipment, timeout=TEAM_PANEL_TIMEOUT, stop_event=stop_event)
-        except vision.TemplateNotFound as exc:
-            equip_match = None
-            self._log(f"[Macro] Can't detect the {equipment} equipment option: {exc}")
-        if equip_match is not None:
-            vision.click_match(self._mouse, hwnd, equip_match)
-            self._log(f'[Macro] Equipment: {equipment} (score {equip_match["score"]:.2f}).')
+        equipment_option_found = False
+        for attempt in range(1, TEAM_LOADOUT_EQUIPMENT_RETRY_ATTEMPTS + 1):
+            if self._checkpoint(stop_event):
+                return False
+            if attempt > 1:
+                self._log(f'[Macro] "{equipment}" equipment option did not appear -- '
+                           f'retrying detection (attempt {attempt}/{TEAM_LOADOUT_EQUIPMENT_RETRY_ATTEMPTS}).')
+            try:
+                equip_match = vision.wait_for_image(
+                    hwnd, equipment, timeout=TEAM_PANEL_TIMEOUT, stop_event=stop_event)
+            except vision.TemplateNotFound as exc:
+                self._log(f"[Macro] Can't detect the {equipment} equipment option: {exc}")
+                break
+            if equip_match is not None:
+                equipment_option_found = True
+                break
+            if stop_event.is_set():
+                return False
+
+        if equipment_option_found:
+            if not self._click_and_verify_gone(
+                    hwnd, stop_event, equipment, TEAM_PANEL_TIMEOUT,
+                    require_gone=True):
+                self._log(f'[Macro] Could not click the "{equipment}" equipment option.')
+                self._save_debug_screenshot_unconditional(
+                    hwnd, f"team_loadout_{equipment}_failed")
+                return False
+            self._log(f'[Macro] Equipment: {equipment} (click confirmed).')
             # Without a settle here, the caller's finally-block H tap (see
             # _apply_team_loadout) fires on the very next line -- pressing H
             # to close the panel before this click has actually registered
             # in-game, so the equipment choice lands inconsistently or not
             # at all and can leave the panel stuck in a half-closed state.
             self._interruptible_sleep(0.5, stop_event)
-        elif not stop_event.is_set():
+        else:
+            if stop_event.is_set():
+                return False
             self._log(f'[Macro] "{equipment}" option never showed up -- Team Loadout '
                       f'{team_num} was not fully applied.')
             self._save_debug_screenshot_unconditional(hwnd, f"team_loadout_{equipment}_failed")
@@ -4090,7 +4112,7 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
 
     def _click_and_verify_gone(self, hwnd, stop_event: threading.Event, name: str, timeout: float,
                                  retry_attempts: int = 3, verify_settle: float = 1.0,
-                                 success_name: str = None) -> bool:
+                                 success_name: str = None, require_gone: bool = False) -> bool:
         """Like _click_found_image, but re-checks the button actually
         disappeared afterward and re-clicks (with a focus reassert) if it's
         still there, up to retry_attempts times -- same "click found it but
@@ -4103,10 +4125,8 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
         visible when Return to Lobby appears, so seeing ``return`` is also
         proof that the click registered.
 
-        Returns whether the button was found at all -- not whether it
-        definitely disappeared, since after retry_attempts a stuck button
-        falls through to the caller's own recovery path rather than being
-        treated as "never found in the first place"."""
+        By default, returns whether the button was found at all -- callers
+        can opt into requiring it to disappear after the final click."""
         match = None
         for attempt in range(1, retry_attempts + 1):
             try:
@@ -4145,6 +4165,9 @@ class MacroRunner(BountyOps, ChallengeOps, CraftingOps, FuelOps, ShopOps, Expedi
             if still_there is None:
                 return True
             if attempt == retry_attempts:
+                if require_gone:
+                    self._log(f'[Macro] "{name}" still showing after {retry_attempts} clicks.')
+                    return False
                 self._log(f'[Macro] "{name}" still showing after {retry_attempts} clicks -- continuing anyway.')
         return True
 

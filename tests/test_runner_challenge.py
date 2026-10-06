@@ -23,11 +23,14 @@ class ChallengeProbe:
         self.logs.append(message)
 
 
-def test_detect_current_challenge_map_uses_ordered_candidate_search(monkeypatch):
+def test_detect_current_challenge_map_uses_discovered_story_maps(monkeypatch):
     """Challenge map detection delegates its ordered alternatives to vision."""
+    from core import maps
+
     probe = ChallengeProbe()
     match = {"score": 0.95}
     calls = []
+    monkeypatch.setattr(maps, "list_story_maps", lambda: ["New Story"])
 
     def find_image_any(hwnd, names):
         calls.append((hwnd, names))
@@ -38,8 +41,12 @@ def test_detect_current_challenge_map_uses_ordered_candidate_search(monkeypatch)
     detected = ChallengeOps._detect_current_challenge_map(probe, 123)
 
     assert detected == "King's Tomb"
-    assert calls == [(123, CHALLENGE_STORY_MAPS)]
+    assert calls == [(
+        123,
+        sorted(set(CHALLENGE_STORY_MAPS) | {"New Story"}, key=str.casefold),
+    )]
     assert probe.debug_calls == [(123, "King's Tomb", match)]
+    assert ChallengeOps._challenge_map_ocr_aliases(calls[0][1])["New Story"] == "new"
 
 
 def test_detect_current_challenge_map_handles_missing_templates(monkeypatch):

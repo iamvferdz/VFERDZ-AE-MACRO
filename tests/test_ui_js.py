@@ -1556,6 +1556,32 @@ def test_challenge_card_summarizes_daily_and_regular_state(tmp_path):
     }
 
 
+def test_challenge_map_setup_renders_maps_from_backend_settings(tmp_path):
+    body = """
+    global.challengeState = {
+      enabled: false, cap: 10, daily: { enabled: false, ready: true },
+      stages: {}, maps: { 'New Story': { macro: 'New Story Farm' } }
+    };
+    global.CHALLENGE_STAGE_SLOTS = [];
+    global.taskTemplates = ['New Story Farm'];
+    global.escapeHtml = value => String(value);
+    global.escJs = value => String(value);
+    const mapList = { innerHTML: '' };
+    global.document = {
+      getElementById: id => id === 'challenge-map-list' ? mapList : null
+    };
+
+    eval(extract('renderStoryMapSetupWarning'));
+    eval(extract('renderChallengeScreen'));
+    renderChallengeScreen();
+
+    console.log(JSON.stringify({ html: mapList.innerHTML }));
+    """
+    out = run_js(body, tmp_path)
+    assert "New Story" in out["html"]
+    assert "New Story Farm" in out["html"]
+
+
 def test_story_map_setup_warning_lists_missing_and_invalid_maps(tmp_path):
     body = """
     global.escapeHtml = value => String(value);
